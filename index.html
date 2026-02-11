@@ -440,6 +440,7 @@
                 this.initialized = false;
                 this.enabled = true;
                 this.masterVolume = 0.3;
+                this.bgMusic = null;
             }
 
             init() {
@@ -776,6 +777,35 @@
                     osc.stop(now + 1.0);
                 } catch(e) {}
             }
+
+            playBackgroundMusic() {
+                if (!this.enabled) return;
+                if (!this.bgMusic) {
+                    this.bgMusic = new Audio('tower.mp3');
+                    this.bgMusic.loop = true;
+                    this.bgMusic.volume = 0.3;
+                }
+                this.bgMusic.play().catch(e => console.log("🎵 Hintergrundmusik: Autoplay blockiert oder Datei nicht gefunden"));
+            }
+
+            stopBackgroundMusic() {
+                if (this.bgMusic) {
+                    this.bgMusic.pause();
+                    this.bgMusic.currentTime = 0;
+                }
+            }
+
+            pauseBackgroundMusic() {
+                if (this.bgMusic) {
+                    this.bgMusic.pause();
+                }
+            }
+
+            resumeBackgroundMusic() {
+                if (this.bgMusic && this.enabled) {
+                    this.bgMusic.play().catch(e => {});
+                }
+            }
         }
         
         const sfx = new SfxEngine();
@@ -786,9 +816,13 @@
             if (sfx.enabled) {
                 btn.classList.add('active');
                 btn.innerText = '🔊 SOUND: ON';
+                if (!isPaused && !gameState.isGameOver) {
+                    sfx.resumeBackgroundMusic();
+                }
             } else {
                 btn.classList.remove('active');
                 btn.innerText = '🔇 SOUND: OFF';
+                sfx.pauseBackgroundMusic();
             }
         }
 
@@ -1167,7 +1201,7 @@
             return skyMesh;
         }
 
-        // === SCHRITT 1: NEBEL WOLKEN & GLITZER PARTIKEL ===
+        // === NEBEL WOLKEN & GLITZER PARTIKEL ===
         let fogClouds = [];
         let glitterParticles = [];
 
@@ -1719,11 +1753,20 @@
         window.togglePause = function() {
             isPaused = !isPaused;
             document.getElementById('pause-overlay').style.display = isPaused ? 'flex' : 'none';
+            
+            if (isPaused) {
+                sfx.pauseBackgroundMusic();
+            } else {
+                sfx.resumeBackgroundMusic();
+            }
+            
             const btn = document.querySelector('.control-btn.pause');
             if (btn) btn.innerText = isPaused ? '▶️ RESUME' : '⏸️ PAUSE';
         }
 
         window.showMenu = function() {
+            sfx.stopBackgroundMusic();
+            
             entities.towers.forEach(t => scene.remove(t.mesh));
             entities.enemies.forEach(e => scene.remove(e.mesh));
             entities.tiles.forEach(t => scene.remove(t));
@@ -1905,6 +1948,8 @@
 
         window.startGame = function(lvlIndex) {
             sfx.init();
+            sfx.playBackgroundMusic();
+            
             texZero = createCharTexture('0', '#00ff41');
             texOne = createCharTexture('1', '#00ff41');
             texHex = createCharTexture('⬡', '#00ffff');
@@ -2554,43 +2599,46 @@
             }, intervalTime);
         }
 
-        function checkWaveEnd() {
-            const check = setInterval(() => {
-                if (gameState.isGameOver) { clearInterval(check); return; }
-                if (isPaused) return;
-                
-                if (entities.enemies.length === 0) {
-                    clearInterval(check);
+        
+function checkWaveEnd() {
+            const checker = setInterval(() => {
+                if (entities.enemies.length === 0 && !gameState.isGameOver) {
+                    clearInterval(checker);
                     gameState.wave++;
                     updateUI();
-                    setTimeout(startWave, 3000);
+                    
+                    const msg = document.getElementById('msg-area');
+                    msg.innerText = "WAVE COMPLETE!";
+                    msg.style.opacity = 1;
+                    setTimeout(() => {
+                        msg.style.opacity = 0;
+                        startWave();
+                    }, 2000);
                 }
-            }, 1000);
-        }
-
-        function victoryScreen() {
-            gameState.isGameOver = true;
-            saveHighscore();
-            document.getElementById('victory-msg').innerText = `Completed ${gameState.wave - 1} Waves!`;
-            document.getElementById('victory-screen').style.display = 'flex';
+            }, 500);
         }
 
         function onPointerDown(e) {
-            sfx.init();
-            if (gameState.isGameOver || isPaused) return;
-            if (e.target.tagName !== 'CANVAS') return;
-
+            if (gameState.isGameOver) return;
+            
             mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
             raycaster.setFromCamera(mouse, camera);
 
-            const towerMeshes = entities.towers.map(t => t.mesh);
+            const towerMeshes = [];
+            entities.towers.forEach(t => {
+                t.mesh.traverse(child => {
+                    if (child.isMesh || child.isSprite) {
+                        towerMeshes.push(child);
+                    }
+                });
+            });
+
             const towerIntersects = raycaster.intersectObjects(towerMeshes, true);
-            
             if (towerIntersects.length > 0) {
                 let tower = null;
-                let obj
- = towerIntersects[0].object;
+                let obj = towerIntersects[0].object;
                 while (obj && !tower) {
                     if (obj.userData.tower) tower = obj.userData.tower;
                     obj = obj.parent;
@@ -2652,6 +2700,13 @@
             document.getElementById('game-over-screen').style.display = 'flex';
         }
 
+        function victoryScreen() {
+            gameState.isGameOver = true;
+            saveHighscore();
+            document.getElementById('victory-msg').innerText = "YOU SURVIVED ALL WAVES!";
+            document.getElementById('victory-screen').style.display = 'flex';
+        }
+
         function onResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
@@ -2705,7 +2760,7 @@
             matrixSkyDome = createMatrixSkyDome();
             scene.add(matrixSkyDome);
 
-            // === SCHRITT 2: Nebel Wolken und Glitzer Partikel erstellen ===
+            // === SCHRITT 2: Nebel und Glitzer initialisieren ===
             fogCloudGroup = createFogClouds();
             scene.add(fogCloudGroup);
 
@@ -2735,7 +2790,7 @@
                 matrixSkyDome.userData.uniforms.uTime.value = time;
             }
 
-            // === SCHRITT 3: Update Nebel und Glitzer (nur wenn nicht pausiert) ===
+            // === SCHRITT 3: Update Nebel und Glitzer ===
             if (!isPaused && !gameState.isGameOver) {
                 updateFogClouds(dt, time);
                 updateGlitterParticles(dt, time);
