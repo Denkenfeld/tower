@@ -91,20 +91,18 @@
         }
         .tower-info-panel h3 { color: #0ff; margin: 0 0 10px 0; }
         .tower-stat { color: #fff; margin: 5px 0; font-size: 14px; }
-        .upgrade-btn {
-            width: 100%; padding: 10px; margin-top: 10px;
-            background: #0f0; color: #000; border: none;
-            font-family: 'Orbitron'; font-weight: bold; cursor: pointer;
+        .upgrade-btn, .sell-btn, .repair-btn {
+            width: 100%; padding: 10px; margin-top: 5px;
+            border: none; font-family: 'Orbitron'; font-weight: bold; cursor: pointer;
             transition: 0.2s;
         }
+        .upgrade-btn { background: #0f0; color: #000; }
         .upgrade-btn:hover { box-shadow: 0 0 20px #0f0; transform: scale(1.05); }
         .upgrade-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
-        .sell-btn {
-            width: 100%; padding: 10px; margin-top: 5px;
-            background: #f00; color: #fff; border: none;
-            font-family: 'Orbitron'; font-weight: bold; cursor: pointer;
-        }
+        .sell-btn { background: #f00; color: #fff; }
         .sell-btn:hover { box-shadow: 0 0 20px #f00; }
+        .repair-btn { background: #ff0; color: #000; }
+        .repair-btn:hover { box-shadow: 0 0 20px #ff0; }
 
         .overlay-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -151,21 +149,51 @@
         .level-card.sandbox { border-color: #0f0; color: #0f0; }
         .level-card.sandbox:hover { box-shadow: 0 0 20px #0f0; }
 
-        .sandbox-controls {
-            display: grid; grid-template-columns: 1fr 1fr;
-            gap: 20px; width: 80%; max-width: 800px;
-            background: rgba(0,0,0,0.7); padding: 30px; border-radius: 10px;
+        .sandbox-container {
+            display: flex; gap: 20px; width: 90%; max-width: 1200px;
+            background: rgba(0,0,0,0.7); padding: 20px; border-radius: 10px;
         }
+        .sandbox-left { flex: 1; }
+        .sandbox-right { flex: 2; }
+        
         .sandbox-section {
             background: rgba(0,40,0,0.3); padding: 15px; border-radius: 8px;
-            border: 1px solid #0f0;
+            border: 1px solid #0f0; margin-bottom: 15px;
         }
-        .sandbox-section h4 { color: #0f0; margin: 0 0 10px 0; }
-        .sandbox-label { color: #0ff; font-size: 12px; margin: 10px 0 5px 0; }
+        .sandbox-section h4 { color: #0f0; margin: 0 0 10px 0; font-size: 14px; }
+        .sandbox-label { color: #0ff; font-size: 12px; margin: 10px 0 5px 0; display: block; }
         .sandbox-input {
             width: 100%; padding: 8px; background: #111; border: 1px solid #0f0;
             color: #0ff; font-family: 'Orbitron'; border-radius: 4px;
         }
+
+        .path-editor {
+            background: rgba(0,0,0,0.8); padding: 10px; border-radius: 8px;
+            border: 1px solid #0f0;
+        }
+        .path-grid {
+            display: grid; grid-template-columns: repeat(17, 25px);
+            gap: 2px; margin: 10px 0;
+        }
+        .path-cell {
+            width: 25px; height: 25px; background: #222; border: 1px solid #444;
+            cursor: pointer; transition: 0.1s;
+        }
+        .path-cell:hover { background: #555; }
+        .path-cell.path { background: #0f0; box-shadow: 0 0 5px #0f0; }
+        .path-cell.start { background: #0ff; box-shadow: 0 0 5px #0ff; }
+        .path-cell.end { background: #f0f; box-shadow: 0 0 5px #f0f; }
+        .path-cell.invalid { background: #f00; }
+
+        .preset-container {
+            display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;
+        }
+        .preset-btn {
+            padding: 8px 15px; background: #222; border: 1px solid #0f0;
+            color: #0f0; font-family: 'Orbitron'; cursor: pointer;
+            transition: 0.2s; font-size: 11px;
+        }
+        .preset-btn:hover { background: #0f0; color: #000; }
 
         .highscore-panel {
             background: rgba(20,20,20,0.9); padding: 20px; border-radius: 10px;
@@ -274,6 +302,7 @@
             <div class="tower-stat" id="tower-info-rate">Fire Rate: 0.6s</div>
             <button class="upgrade-btn" id="upgrade-btn" onclick="upgradeTower()">UPGRADE (100 CR)</button>
             <button class="sell-btn" onclick="sellTower()">SELL (25 CR)</button>
+            <button class="repair-btn" id="repair-btn" onclick="repairTile()" style="display:none;">REPAIR TILE (200 CR)</button>
         </div>
     </div>
 
@@ -307,53 +336,79 @@
         <h1 style="-webkit-text-fill-color: #0f0;">🛠️ SANDBOX MODE</h1>
         <h2>Customize Your Challenge</h2>
         
-        <div class="sandbox-controls">
-            <div class="sandbox-section">
-                <h4>💰 Economy</h4>
-                <div class="sandbox-label">Starting Credits</div>
-                <input type="number" class="sandbox-input" id="sandbox-money" value="1000" min="0" max="10000" step="100">
-                
-                <div class="sandbox-label">Difficulty Scale</div>
-                <input type="range" class="sandbox-input" id="sandbox-difficulty" min="10" max="300" value="100">
-                <span style="color:#0ff;" id="sandbox-difficulty-val">1.0x</span>
+        <div class="sandbox-container">
+            <div class="sandbox-left">
+                <div class="sandbox-section">
+                    <h4>💰 Economy</h4>
+                    <label class="sandbox-label">Starting Credits</label>
+                    <input type="number" class="sandbox-input" id="sandbox-money" value="1000" min="0" max="10000" step="100">
+                    
+                    <label class="sandbox-label">Difficulty Scale</label>
+                    <input type="range" class="sandbox-input" id="sandbox-difficulty" min="10" max="300" value="100">
+                    <span style="color:#0ff;" id="sandbox-difficulty-val">1.0x</span>
+                </div>
+
+                <div class="sandbox-section">
+                    <h4>👾 Enemies</h4>
+                    <label class="sandbox-label">Enemies Per Wave</label>
+                    <input type="number" class="sandbox-input" id="sandbox-enemy-count" value="10" min="1" max="50">
+                    
+                    <label class="sandbox-label">Boss Wave Interval</label>
+                    <input type="number" class="sandbox-input" id="sandbox-boss-interval" value="5" min="1" max="20">
+                    
+                    <label class="sandbox-label">Max Waves (0 = ∞)</label>
+                    <input type="number" class="sandbox-input" id="sandbox-max-waves" value="0" min="0" max="100">
+                </div>
+
+                <div class="sandbox-section">
+                    <h4>🎨 Theme Color</h4>
+                    <label class="sandbox-label">Hue</label>
+                    <input type="range" class="sandbox-input" id="sandbox-hue" min="0" max="360" value="120">
+                    <div style="width:100%; height:30px; border-radius:5px; margin-top:10px;" id="sandbox-color-preview"></div>
+                </div>
+
+                <div class="sandbox-section">
+                    <h4>⚔️ Enemy Mix</h4>
+                    <label class="sandbox-label">Normal %</label>
+                    <input type="range" class="sandbox-input" id="sandbox-normal" min="0" max="100" value="50">
+                    <span style="color:#0ff;" id="sandbox-normal-val">50%</span>
+                    
+                    <label class="sandbox-label">Speed %</label>
+                    <input type="range" class="sandbox-input" id="sandbox-speed" min="0" max="100" value="30">
+                    <span style="color:#0ff;" id="sandbox-speed-val">30%</span>
+                    
+                    <label class="sandbox-label">Tank %</label>
+                    <input type="range" class="sandbox-input" id="sandbox-tank" min="0" max="100" value="20">
+                    <span style="color:#0ff;" id="sandbox-tank-val">20%</span>
+                </div>
             </div>
 
-            <div class="sandbox-section">
-                <h4>👾 Enemies</h4>
-                <div class="sandbox-label">Enemies Per Wave</div>
-                <input type="number" class="sandbox-input" id="sandbox-enemy-count" value="10" min="1" max="50">
-                
-                <div class="sandbox-label">Boss Wave Interval</div>
-                <input type="number" class="sandbox-input" id="sandbox-boss-interval" value="5" min="1" max="20">
-                
-                <div class="sandbox-label">Max Waves (0 = ∞)</div>
-                <input type="number" class="sandbox-input" id="sandbox-max-waves" value="0" min="0" max="100">
-            </div>
-
-            <div class="sandbox-section">
-                <h4>🎨 Theme Color</h4>
-                <div class="sandbox-label">Hue</div>
-                <input type="range" class="sandbox-input" id="sandbox-hue" min="0" max="360" value="120">
-                <div style="width:100%; height:30px; border-radius:5px; margin-top:10px;" id="sandbox-color-preview"></div>
-            </div>
-
-            <div class="sandbox-section">
-                <h4>⚔️ Enemy Mix</h4>
-                <div class="sandbox-label">Normal %</div>
-                <input type="range" class="sandbox-input" id="sandbox-normal" min="0" max="100" value="50">
-                <span style="color:#0ff;" id="sandbox-normal-val">50%</span>
-                
-                <div class="sandbox-label">Speed %</div>
-                <input type="range" class="sandbox-input" id="sandbox-speed" min="0" max="100" value="30">
-                <span style="color:#0ff;" id="sandbox-speed-val">30%</span>
-                
-                <div class="sandbox-label">Tank %</div>
-                <input type="range" class="sandbox-input" id="sandbox-tank" min="0" max="100" value="20">
-                <span style="color:#0ff;" id="sandbox-tank-val">20%</span>
+            <div class="sandbox-right">
+                <div class="path-editor">
+                    <h4 style="color:#0f0; margin: 0 0 10px 0;">🛤️ Path Editor</h4>
+                    <div style="color:#888; font-size:11px; margin-bottom:10px;">
+                        Click to draw path. Start (cyan) → Path (green) → End (magenta)
+                    </div>
+                    
+                    <div class="preset-container">
+                        <button class="preset-btn" onclick="loadPreset('snake')">🐍 Snake</button>
+                        <button class="preset-btn" onclick="loadPreset('spiral')">🌀 Spiral</button>
+                        <button class="preset-btn" onclick="loadPreset('zigzag')">⚡ ZigZag</button>
+                        <button class="preset-btn" onclick="loadPreset('maze')">🏛️ Maze</button>
+                        <button class="preset-btn" onclick="loadPreset('straight')">➡️ Straight</button>
+                        <button class="preset-btn" onclick="clearPath()">🗑️ Clear</button>
+                    </div>
+                    
+                    <div class="path-grid" id="path-grid"></div>
+                    
+                    <div style="color:#888; font-size:11px; margin-top:10px;">
+                        Path Length: <span id="path-length" style="color:#0f0;">0</span> tiles
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div style="margin-top: 30px;">
+        <div style="margin-top: 20px;">
             <button class="btn-main" onclick="startSandboxGame()">🚀 START SANDBOX</button>
             <button class="btn-main" onclick="closeSandbox()">BACK</button>
         </div>
@@ -377,7 +432,7 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-        // --- SONIC WAVE AUDIO ENGINE ---
+        // AUDIO ENGINE
         class SfxEngine {
             constructor() {
                 this.ctx = null;
@@ -396,9 +451,7 @@
                     this.masterGain.connect(this.ctx.destination);
                     this.initialized = true;
                     if (this.ctx.state === 'suspended') this.ctx.resume();
-                } catch(e) {
-                    console.log('Audio init failed:', e);
-                }
+                } catch(e) {}
             }
 
             playSonicWave() {
@@ -407,24 +460,19 @@
                     const now = this.ctx.currentTime;
                     const gainNode = this.ctx.createGain();
                     gainNode.connect(this.masterGain);
-                    
                     const osc = this.ctx.createOscillator();
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(100, now);
                     osc.frequency.linearRampToValueAtTime(50, now + 0.5);
-                    
                     const lfo = this.ctx.createOscillator();
                     lfo.frequency.setValueAtTime(8, now);
                     const lfoGain = this.ctx.createGain();
                     lfoGain.gain.setValueAtTime(20, now);
-                    
                     lfo.connect(lfoGain);
                     lfoGain.connect(osc.frequency);
                     osc.connect(gainNode);
-                    
                     gainNode.gain.setValueAtTime(0.25, now);
                     gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
-                    
                     osc.start(now);
                     lfo.start(now);
                     osc.stop(now + 0.5);
@@ -438,23 +486,18 @@
                     const now = this.ctx.currentTime;
                     const gainNode = this.ctx.createGain();
                     gainNode.connect(this.masterGain);
-                    
                     const osc = this.ctx.createOscillator();
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(150, now);
                     osc.connect(gainNode);
-                    
                     const lfo = this.ctx.createOscillator();
                     lfo.frequency.setValueAtTime(15, now);
                     const lfoGain = this.ctx.createGain();
                     lfoGain.gain.setValueAtTime(0.15, now);
-                    
                     lfo.connect(lfoGain);
                     lfoGain.connect(gainNode.gain);
-                    
                     gainNode.gain.setValueAtTime(0.2, now);
                     gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
-                    
                     osc.start(now);
                     lfo.start(now);
                     osc.stop(now + 0.6);
@@ -468,30 +511,24 @@
                     const now = this.ctx.currentTime;
                     const gainNode = this.ctx.createGain();
                     gainNode.connect(this.masterGain);
-                    
                     const osc = this.ctx.createOscillator();
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(120, now);
                     osc.frequency.linearRampToValueAtTime(90, now + 0.6);
-                    
                     const filter = this.ctx.createBiquadFilter();
                     filter.type = 'lowpass';
                     filter.frequency.setValueAtTime(800, now);
                     filter.Q.setValueAtTime(5, now);
-                    
                     const lfo = this.ctx.createOscillator();
                     lfo.frequency.setValueAtTime(4, now);
                     const lfoGain = this.ctx.createGain();
                     lfoGain.gain.setValueAtTime(200, now);
-                    
                     lfo.connect(lfoGain);
                     lfoGain.connect(filter.frequency);
                     osc.connect(filter);
                     filter.connect(gainNode);
-                    
                     gainNode.gain.setValueAtTime(0.25, now);
                     gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
-                    
                     osc.start(now);
                     lfo.start(now);
                     osc.stop(now + 0.6);
@@ -505,24 +542,19 @@
                     const now = this.ctx.currentTime;
                     const gainNode = this.ctx.createGain();
                     gainNode.connect(this.masterGain);
-                    
                     const osc = this.ctx.createOscillator();
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(60, now);
                     osc.frequency.linearRampToValueAtTime(30, now + 0.4);
-                    
                     const lfo = this.ctx.createOscillator();
                     lfo.frequency.setValueAtTime(3, now);
                     const lfoGain = this.ctx.createGain();
                     lfoGain.gain.setValueAtTime(15, now);
-                    
                     lfo.connect(lfoGain);
                     lfoGain.connect(osc.frequency);
                     osc.connect(gainNode);
-                    
                     gainNode.gain.setValueAtTime(0.3, now);
                     gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-                    
                     osc.start(now);
                     lfo.start(now);
                     osc.stop(now + 0.4);
@@ -536,25 +568,20 @@
                     const now = this.ctx.currentTime;
                     const gainNode = this.ctx.createGain();
                     gainNode.connect(this.masterGain);
-                    
                     const osc = this.ctx.createOscillator();
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(80, now);
                     osc.frequency.exponentialRampToValueAtTime(300, now + 0.7);
-                    
                     const lfo = this.ctx.createOscillator();
                     lfo.frequency.setValueAtTime(6, now);
                     const lfoGain = this.ctx.createGain();
                     lfoGain.gain.setValueAtTime(25, now);
-                    
                     lfo.connect(lfoGain);
                     lfoGain.connect(osc.frequency);
                     osc.connect(gainNode);
-                    
                     gainNode.gain.setValueAtTime(0.1, now);
                     gainNode.gain.linearRampToValueAtTime(0.3, now + 0.5);
                     gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.7);
-                    
                     osc.start(now);
                     lfo.start(now);
                     osc.stop(now + 0.7);
@@ -568,29 +595,23 @@
                     const now = this.ctx.currentTime;
                     const gainNode = this.ctx.createGain();
                     gainNode.connect(this.masterGain);
-                    
                     const osc = this.ctx.createOscillator();
                     osc.type = 'sawtooth';
                     osc.frequency.setValueAtTime(80, now);
-                    
                     const filter = this.ctx.createBiquadFilter();
                     filter.type = 'lowpass';
                     filter.frequency.setValueAtTime(200, now);
                     filter.Q.setValueAtTime(10, now);
-                    
                     const lfo = this.ctx.createOscillator();
                     lfo.frequency.setValueAtTime(6, now);
                     const lfoGain = this.ctx.createGain();
                     lfoGain.gain.setValueAtTime(800, now);
-                    
                     lfo.connect(lfoGain);
                     lfoGain.connect(filter.frequency);
                     osc.connect(filter);
                     filter.connect(gainNode);
-                    
                     gainNode.gain.setValueAtTime(0.3, now);
                     gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-                    
                     osc.start(now);
                     lfo.start(now);
                     osc.stop(now + 0.4);
@@ -604,30 +625,24 @@
                     const now = this.ctx.currentTime;
                     const gainNode = this.ctx.createGain();
                     gainNode.connect(this.masterGain);
-                    
                     const osc = this.ctx.createOscillator();
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(400, now);
                     osc.frequency.exponentialRampToValueAtTime(200, now + 0.5);
-                    
                     const filter = this.ctx.createBiquadFilter();
                     filter.type = 'bandpass';
                     filter.frequency.setValueAtTime(400, now);
                     filter.Q.setValueAtTime(20, now);
-                    
                     const lfo = this.ctx.createOscillator();
                     lfo.frequency.setValueAtTime(7, now);
                     const lfoGain = this.ctx.createGain();
                     lfoGain.gain.setValueAtTime(100, now);
-                    
                     lfo.connect(lfoGain);
                     lfoGain.connect(filter.frequency);
                     osc.connect(filter);
                     filter.connect(gainNode);
-                    
                     gainNode.gain.setValueAtTime(0.25, now);
                     gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
-                    
                     osc.start(now);
                     lfo.start(now);
                     osc.stop(now + 0.5);
@@ -641,28 +656,22 @@
                     const now = this.ctx.currentTime;
                     const gainNode = this.ctx.createGain();
                     gainNode.connect(this.masterGain);
-                    
                     const osc1 = this.ctx.createOscillator();
                     const osc2 = this.ctx.createOscillator();
                     osc1.type = 'sine';
                     osc2.type = 'sine';
                     osc1.frequency.setValueAtTime(150, now);
                     osc2.frequency.setValueAtTime(150.5, now);
-                    
                     const lfo = this.ctx.createOscillator();
                     lfo.frequency.setValueAtTime(0.5, now);
                     const lfoGain = this.ctx.createGain();
                     lfoGain.gain.setValueAtTime(5, now);
-                    
                     lfo.connect(lfoGain);
                     lfoGain.connect(osc2.frequency);
-                    
                     osc1.connect(gainNode);
                     osc2.connect(gainNode);
-                    
                     gainNode.gain.setValueAtTime(0.3, now);
                     gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
-                    
                     osc1.start(now);
                     osc2.start(now);
                     lfo.start(now);
@@ -678,30 +687,24 @@
                     const now = this.ctx.currentTime;
                     const gainNode = this.ctx.createGain();
                     gainNode.connect(this.masterGain);
-                    
                     const osc = this.ctx.createOscillator();
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(400, now);
                     osc.frequency.exponentialRampToValueAtTime(100, now + 1.5);
-                    
                     const filter = this.ctx.createBiquadFilter();
                     filter.type = 'bandpass';
                     filter.frequency.setValueAtTime(400, now);
                     filter.Q.setValueAtTime(20, now);
-                    
                     const lfo = this.ctx.createOscillator();
                     lfo.frequency.setValueAtTime(7, now);
                     const lfoGain = this.ctx.createGain();
                     lfoGain.gain.setValueAtTime(100, now);
-                    
                     lfo.connect(lfoGain);
                     lfoGain.connect(filter.frequency);
                     osc.connect(filter);
                     filter.connect(gainNode);
-                    
                     gainNode.gain.setValueAtTime(0.4, now);
                     gainNode.gain.exponentialRampToValueAtTime(0.01, now + 1.5);
-                    
                     osc.start(now);
                     lfo.start(now);
                     osc.stop(now + 1.5);
@@ -715,20 +718,16 @@
                     const now = this.ctx.currentTime;
                     const gainNode = this.ctx.createGain();
                     gainNode.connect(this.masterGain);
-                    
                     const osc1 = this.ctx.createOscillator();
                     const osc2 = this.ctx.createOscillator();
                     osc1.type = 'sine';
                     osc2.type = 'sine';
                     osc1.frequency.setValueAtTime(200, now);
                     osc2.frequency.setValueAtTime(200.8, now);
-                    
                     osc1.connect(gainNode);
                     osc2.connect(gainNode);
-                    
                     gainNode.gain.setValueAtTime(0.2, now);
                     gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-                    
                     osc1.start(now);
                     osc2.start(now);
                     osc1.stop(now + 0.3);
@@ -742,27 +741,39 @@
                     const now = this.ctx.currentTime;
                     const gainNode = this.ctx.createGain();
                     gainNode.connect(this.masterGain);
-                    
                     const fundamentalFreq = 200;
                     const harmonics = [1, 1.5, 2];
-                    
                     harmonics.forEach((harmonic, i) => {
                         const osc = this.ctx.createOscillator();
                         osc.type = 'sine';
                         osc.frequency.setValueAtTime(fundamentalFreq * harmonic, now);
-                        
                         const oscGain = this.ctx.createGain();
                         oscGain.gain.setValueAtTime(0.3 / harmonic, now);
-                        
                         osc.connect(oscGain);
                         oscGain.connect(gainNode);
-                        
                         osc.start(now);
                         osc.stop(now + 0.5);
                     });
-                    
                     gainNode.gain.setValueAtTime(0.25, now);
                     gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                } catch(e) {}
+            }
+
+            playCollapse() {
+                if (!this.ctx || !this.initialized || !this.enabled) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const gainNode = this.ctx.createGain();
+                    gainNode.connect(this.masterGain);
+                    const osc = this.ctx.createOscillator();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(200, now);
+                    osc.frequency.exponentialRampToValueAtTime(40, now + 1.0);
+                    osc.connect(gainNode);
+                    gainNode.gain.setValueAtTime(0.3, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 1.0);
+                    osc.start(now);
+                    osc.stop(now + 1.0);
                 } catch(e) {}
             }
         }
@@ -781,22 +792,6 @@
             }
         }
 
-        let bgMusic = null;
-        function loadBackgroundMusic() {
-            if (!sfx.enabled) return;
-            try {
-                bgMusic = new Audio('tower.mp3');
-                bgMusic.loop = true;
-                bgMusic.volume = 0.3;
-                bgMusic.play().catch(e => {
-                    console.log('Background music not found or failed to load:', e);
-                    bgMusic = null;
-                });
-            } catch(e) {
-                console.log('Could not load tower.mp3');
-            }
-        }
-
         function createCharTexture(char, color) {
             const canvas = document.createElement('canvas');
             canvas.width = 64; canvas.height = 64;
@@ -812,14 +807,13 @@
         }
 
         let texZero, texOne, texHex;
-
         const TILE_SIZE = 4;
         let scene, camera, renderer, controls, raycaster, mouse;
-        let pathBuilder = null;
         let ambientLight, directionalLight;
         let isPaused = false;
         let deleteMode = false;
         let selectedTower = null;
+        let selectedTile = null;
         let neuroCore = null;
         let portalGateway = null;
         let gameSpeed = 1.0;
@@ -832,6 +826,7 @@
             levelIndex: 0,
             selectedTowerType: 0,
             isGameOver: false,
+            collapsedTiles: [],
             sandboxConfig: {
                 customPath: [],
                 enemyCount: 5,
@@ -845,10 +840,135 @@
             }
         };
 
+        let sandboxPath = [];
+        let pathGrid = [];
+
+        window.loadPreset = function(presetName) {
+            const presets = {
+                snake: [{x:-8,z:-8}, {x:-8,z:-2}, {x:0,z:-2}, {x:0,z:2}, {x:8,z:2}, {x:8,z:8}],
+                spiral: [{x:-10,z:-10}, {x:10,z:-10}, {x:10,z:10}, {x:-5,z:10}, {x:-5,z:-5}, {x:5,z:-5}, {x:5,z:5}, {x:0,z:5}],
+                zigzag: [{x:-8,z:8}, {x:-4,z:8}, {x:-4,z:-8}, {x:0,z:-8}, {x:0,z:8}, {x:4,z:8}, {x:4,z:-8}, {x:8,z:-8}, {x:8,z:8}],
+                maze: [{x:-10,z:-8}, {x:-2,z:-8}, {x:-2,z:0}, {x:8,z:0}, {x:8,z:8}],
+                straight: [{x:-10,z:0}, {x:10,z:0}]
+            };
+            sandboxPath = presets[presetName] || [];
+            renderPathGrid();
+        }
+
+        window.clearPath = function() {
+            sandboxPath = [];
+            renderPathGrid();
+        }
+
+        function initPathGrid() {
+            const grid = document.getElementById('path-grid');
+            grid.innerHTML = '';
+            pathGrid = [];
+            
+            for (let z = 8; z >= -8; z--) {
+                for (let x = -8; x <= 8; x++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'path-cell';
+                    cell.dataset.x = x;
+                    cell.dataset.z = z;
+                    cell.onclick = function() {
+                        const cx = parseInt(this.dataset.x);
+                        const cz = parseInt(this.dataset.z);
+                        togglePathCell(cx, cz);
+                    };
+                    grid.appendChild(cell);
+                    pathGrid.push({x, z, element: cell});
+                }
+            }
+            renderPathGrid();
+        }
+
+        function togglePathCell(x, z) {
+            const index = sandboxPath.findIndex(p => p.x === x && p.z === z);
+            if (index === -1) {
+                sandboxPath.push({x, z});
+            } else {
+                sandboxPath.splice(index, 1);
+            }
+            renderPathGrid();
+        }
+
+        function renderPathGrid() {
+            pathGrid.forEach(cell => {
+                const hasPath = sandboxPath.some(p => p.x === cell.x && p.z === cell.z);
+                const isStart = sandboxPath.length > 0 && sandboxPath[0].x === cell.x && sandboxPath[0].z === cell.z;
+                const isEnd = sandboxPath.length > 0 && sandboxPath[sandboxPath.length - 1].x === cell.x && sandboxPath[sandboxPath.length - 1].z === cell.z;
+                
+                cell.element.className = 'path-cell';
+                if (isStart) cell.element.classList.add('start');
+                else if (isEnd) cell.element.classList.add('end');
+                else if (hasPath) cell.element.classList.add('path');
+            });
+            document.getElementById('path-length').innerText = sandboxPath.length;
+        }
+
+        window.openSandbox = function() {
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('sandbox-setup-screen').style.display = 'flex';
+            initPathGrid();
+            updateSandboxUI();
+        }
+
+        window.closeSandbox = function() {
+            document.getElementById('sandbox-setup-screen').style.display = 'none';
+            document.getElementById('start-screen').style.display = 'flex';
+        }
+
+        function updateSandboxUI() {
+            document.getElementById('sandbox-difficulty').oninput = function() {
+                const val = (this.value / 100).toFixed(1);
+                document.getElementById('sandbox-difficulty-val').innerText = val + 'x';
+            };
+            document.getElementById('sandbox-normal').oninput = function() {
+                document.getElementById('sandbox-normal-val').innerText = this.value + '%';
+            };
+            document.getElementById('sandbox-speed').oninput = function() {
+                document.getElementById('sandbox-speed-val').innerText = this.value + '%';
+            };
+            document.getElementById('sandbox-tank').oninput = function() {
+                document.getElementById('sandbox-tank-val').innerText = this.value + '%';
+            };
+            document.getElementById('sandbox-hue').oninput = function() {
+                const hue = this.value;
+                document.getElementById('sandbox-color-preview').style.background = `hsl(${hue}, 100%, 50%)`;
+            };
+            document.getElementById('sandbox-color-preview').style.background = 'hsl(120, 100%, 50%)';
+        }
+
+        window.startSandboxGame = function() {
+            if (sandboxPath.length < 2) {
+                alert('Path needs at least 2 points (start and end)!');
+                return;
+            }
+            gameState.sandboxConfig = {
+                startingMoney: parseInt(document.getElementById('sandbox-money').value),
+                difficultyScale: parseFloat(document.getElementById('sandbox-difficulty').value) / 100,
+                enemyCount: parseInt(document.getElementById('sandbox-enemy-count').value),
+                bossInterval: parseInt(document.getElementById('sandbox-boss-interval').value),
+                maxWaves: parseInt(document.getElementById('sandbox-max-waves').value) || null,
+                enemyMix: {
+                    normal: parseFloat(document.getElementById('sandbox-normal').value) / 100,
+                    speed: parseFloat(document.getElementById('sandbox-speed').value) / 100,
+                    tank: parseFloat(document.getElementById('sandbox-tank').value) / 100
+                },
+                hue: parseInt(document.getElementById('sandbox-hue').value),
+                color: new THREE.Color().setHSL(
+                    parseInt(document.getElementById('sandbox-hue').value) / 360, 1.0, 0.5
+                ),
+                customPath: JSON.parse(JSON.stringify(sandboxPath)),
+                towerRestrictions: [true, true, true]
+            };
+            startGame(4);
+        }
+
         const TOWER_TYPES = [
             { 
-                name: "HACKER-0", 
-                baseCost: 50, 
+                name: "HACKER-0", baseCost: 50, 
                 upgrades: [
                     { damage: 10, range: 15, rate: 0.6, color: 0x00ffff, cost: 0 },
                     { damage: 20, range: 18, rate: 0.5, color: 0x00ddff, cost: 80 },
@@ -857,8 +977,7 @@
                 projectileSpeed: 40
             },
             { 
-                name: "HACKER-1", 
-                baseCost: 120,
+                name: "HACKER-1", baseCost: 120,
                 upgrades: [
                     { damage: 50, range: 30, rate: 2.0, color: 0xffff00, cost: 0 },
                     { damage: 100, range: 40, rate: 1.5, color: 0xffcc00, cost: 200 },
@@ -867,8 +986,7 @@
                 projectileSpeed: 80
             },
             { 
-                name: "HACKER-X", 
-                baseCost: 200,
+                name: "HACKER-X", baseCost: 200,
                 upgrades: [
                     { damage: 20, range: 12, rate: 1.5, color: 0xff00ff, cost: 0, aoe: 8 },
                     { damage: 40, range: 15, rate: 1.2, color: 0xff00cc, cost: 250 },
@@ -879,28 +997,11 @@
         ];
 
         const LEVELS = [
-            {
-                color: new THREE.Color(0.0, 1.0, 1.0),
-                path: [{x:-8,z:-8}, {x:-8,z:-2}, {x:0,z:-2}, {x:0,z:2}, {x:8,z:2}, {x:8,z:8}]
-            },
-            {
-                color: new THREE.Color(1.0, 0.0, 1.0),
-                path: [{x:-10,z:-10}, {x:10,z:-10}, {x:10,z:10}, {x:-5,z:10}, {x:-5,z:-5}, {x:5,z:-5}, {x:5,z:5}, {x:0,z:5}]
-            },
-            {
-                color: new THREE.Color(1.0, 1.0, 0.0),
-                path: [{x:-8,z:8}, {x:-4,z:8}, {x:-4,z:-8}, {x:0,z:-8}, {x:0,z:8}, {x:4,z:8}, {x:4,z:-8}, {x:8,z:-8}, {x:8,z:8}]
-            },
-            {
-                color: new THREE.Color(1.0, 0.5, 0.0),
-                path: [{x:-10,z:-8}, {x:-2,z:-8}, {x:-2,z:0}, {x:8,z:0}, {x:8,z:8}],
-                isBalloonLevel: true
-            },
-            {
-                isSandbox: true,
-                color: new THREE.Color(0.0, 1.0, 0.5),
-                path: [{x:-8,z:-8}, {x:-8,z:-2}, {x:0,z:-2}, {x:0,z:2}, {x:8,z:2}, {x:8,z:8}]
-            }
+            { color: new THREE.Color(0.0, 1.0, 1.0), path: [{x:-8,z:-8}, {x:-8,z:-2}, {x:0,z:-2}, {x:0,z:2}, {x:8,z:2}, {x:8,z:8}] },
+            { color: new THREE.Color(1.0, 0.0, 1.0), path: [{x:-10,z:-10}, {x:10,z:-10}, {x:10,z:10}, {x:-5,z:10}, {x:-5,z:-5}, {x:5,z:-5}, {x:5,z:5}, {x:0,z:5}] },
+            { color: new THREE.Color(1.0, 1.0, 0.0), path: [{x:-8,z:8}, {x:-4,z:8}, {x:-4,z:-8}, {x:0,z:-8}, {x:0,z:8}, {x:4,z:8}, {x:4,z:-8}, {x:8,z:-8}, {x:8,z:8}] },
+            { color: new THREE.Color(1.0, 0.5, 0.0), path: [{x:-10,z:-8}, {x:-2,z:-8}, {x:-2,z:0}, {x:8,z:0}, {x:8,z:8}], isBalloonLevel: true },
+            { isSandbox: true, color: new THREE.Color(0.0, 1.0, 0.5), path: [] }
         ];
 
         const entities = {
@@ -931,15 +1032,12 @@
                 uniform float uTime;
                 uniform vec3 uColor;
                 varying vec2 vUv;
-                
                 void main() {
                     vec2 grid = abs(fract(vUv * 20.0 - vec2(0, uTime * 0.2)) - 0.5) / fwidth(vUv * 20.0);
                     float line = min(grid.x, grid.y);
                     float alpha = 1.0 - min(line, 1.0);
-                    
                     float dist = distance(vUv, vec2(0.5, 0.5));
                     alpha *= (1.0 - dist * 1.5);
-                    
                     vec3 finalColor = uColor * alpha * 2.0;
                     gl_FragColor = vec4(finalColor, alpha);
                 }
@@ -949,9 +1047,7 @@
             depthWrite: false
         });
 
-        // DARK MYSTICAL SKY
         function createMatrixSkyDome() {
-            console.log('Creating Dark Mystical Sky...');
             const skyGeo = new THREE.SphereGeometry(100, 64, 64);
             const skyUniforms = { uTime: { value: 0 } };
             
@@ -993,7 +1089,6 @@
                     vec2 i = floor(uv);
                     vec2 f = fract(uv);
                     float minDist = 1.0;
-                    
                     for(int y = -1; y <= 1; y++) {
                         for(int x = -1; x <= 1; x++) {
                             vec2 neighbor = vec2(float(x), float(y));
@@ -1007,13 +1102,11 @@
 
                 void main() {
                     vec3 pos = normalize(vPosition);
-                    
                     float theta = atan(pos.z, pos.x);
                     float phi = acos(pos.y);
                     vec2 uv = vec2(theta / 6.28318, phi / 3.14159);
                     
                     vec3 baseColor = vec3(0.0, 0.01, 0.03);
-                    
                     float depthGradient = pow(uv.y, 2.0);
                     baseColor += vec3(0.0, 0.02, 0.05) * (1.0 - depthGradient);
                     
@@ -1048,16 +1141,8 @@
                     pulse = pow(pulse, 4.0);
                     vec3 pulseColor = vec3(0.05, 0.0, 0.1) * pulse * 0.2;
                     
-                    vec3 finalColor = baseColor;
-                    finalColor += rainColor;
-                    finalColor += cellColor;
-                    finalColor += ringColor;
-                    finalColor += starColor;
-                    finalColor += horizonColor;
-                    finalColor += pulseColor;
-                    
+                    vec3 finalColor = baseColor + rainColor + cellColor + ringColor + starColor + horizonColor + pulseColor;
                     finalColor *= (0.95 + sin(uTime * 0.8) * 0.05);
-                    
                     float vignette = 1.0 - length(vec2(uv.x - 0.5, uv.y - 0.5) * 0.5) * 0.3;
                     finalColor *= vignette;
                     
@@ -1079,22 +1164,181 @@
             skyMesh.position.set(0, 0, 0);
             skyMesh.renderOrder = -100;
             skyMesh.userData.uniforms = skyUniforms;
-            
-            console.log('Dark Mystical Sky created!');
             return skyMesh;
         }
+
+        // === SCHRITT 1: NEBEL WOLKEN & GLITZER PARTIKEL ===
+        let fogClouds = [];
+        let glitterParticles = [];
+
+        function createFogClouds() {
+            console.log('☁️ Creating Fog Clouds...');
+            const cloudGroup = new THREE.Group();
+
+            for (let i = 0; i < 8; i++) {
+                const cloudGeo = new THREE.SphereGeometry(8 + Math.random() * 5, 16, 16);
+
+                const cloudMat = new THREE.ShaderMaterial({
+                    uniforms: {
+                        uTime: { value: 0 },
+                        uOpacity: { value: 0.15 + Math.random() * 0.1 },
+                        uColor: { value: new THREE.Color(0.0, 0.3 + Math.random() * 0.2, 0.5 + Math.random() * 0.3) }
+                    },
+                    vertexShader: `
+                        varying vec3 vNormal;
+                        varying vec3 vPosition;
+                        void main() {
+                            vNormal = normalize(normalMatrix * normal);
+                            vPosition = position;
+                            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                        }
+                    `,
+                    fragmentShader: `
+                        uniform float uTime;
+                        uniform float uOpacity;
+                        uniform vec3 uColor;
+                        varying vec3 vNormal;
+                        varying vec3 vPosition;
+
+                        float noise(vec3 p) {
+                            return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453);
+                        }
+
+                        void main() {
+                            float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0, 0, 1))), 2.0);
+                            float n = noise(vPosition * 0.3 + vec3(uTime * 0.1));
+                            n = n * 0.5 + 0.5;
+                            vec3 color = uColor * (0.8 + n * 0.4);
+                            float alpha = uOpacity * fresnel * n;
+                            gl_FragColor = vec4(color, alpha);
+                        }
+                    `,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false,
+                    side: THREE.DoubleSide
+                });
+
+                const cloud = new THREE.Mesh(cloudGeo, cloudMat);
+
+                const angle = Math.random() * Math.PI * 2;
+                const radius = 30 + Math.random() * 20;
+                const height = -5 + Math.random() * 20;
+
+                cloud.position.set(
+                    Math.cos(angle) * radius,
+                    height,
+                    Math.sin(angle) * radius
+                );
+
+                cloud.userData = {
+                    speed: 0.3 + Math.random() * 0.5,
+                    angle: angle,
+                    radius: radius,
+                    heightOffset: Math.random() * Math.PI * 2,
+                    rotationSpeed: (Math.random() - 0.5) * 0.2
+                };
+
+                cloudGroup.add(cloud);
+                fogClouds.push(cloud);
+            }
+
+            console.log('✅ Created', fogClouds.length, 'fog clouds');
+            return cloudGroup;
+        }
+
+        function updateFogClouds(dt, time) {
+            fogClouds.forEach(cloud => {
+                cloud.userData.angle += cloud.userData.speed * dt * 0.1;
+                cloud.position.x = Math.cos(cloud.userData.angle) * cloud.userData.radius;
+                cloud.position.z = Math.sin(cloud.userData.angle) * cloud.userData.radius;
+                cloud.position.y += Math.sin(time * 0.5 + cloud.userData.heightOffset) * 0.02;
+                cloud.rotation.y += cloud.userData.rotationSpeed * dt;
+                cloud.material.uniforms.uTime.value = time;
+            });
+        }
+
+        function createGlitterParticles() {
+            console.log('✨ Creating Glitter Particles...');
+            const particleGroup = new THREE.Group();
+
+            for (let i = 0; i < 100; i++) {
+                const particleGeo = new THREE.SphereGeometry(0.1 + Math.random() * 0.15, 8, 8);
+
+                const color = new THREE.Color();
+                const hue = Math.random();
+                if (hue < 0.3) {
+                    color.setHex(0x00ffff);
+                } else if (hue < 0.6) {
+                    color.setHex(0xff00ff);
+                } else {
+                    color.setHex(0xffff00);
+                }
+
+                const particleMat = new THREE.MeshBasicMaterial({
+                    color: color,
+                    transparent: true,
+                    opacity: 0.6,
+                    blending: THREE.AdditiveBlending
+                });
+
+                const particle = new THREE.Mesh(particleGeo, particleMat);
+
+                particle.position.set(
+                    (Math.random() - 0.5) * 60,
+                    Math.random() * 25,
+                    (Math.random() - 0.5) * 60
+                );
+
+                particle.userData = {
+                    baseY: particle.position.y,
+                    floatSpeed: 0.5 + Math.random() * 1.0,
+                    floatOffset: Math.random() * Math.PI * 2,
+                    twinkleSpeed: 2.0 + Math.random() * 3.0,
+                    twinkleOffset: Math.random() * Math.PI * 2,
+                    driftX: (Math.random() - 0.5) * 0.5,
+                    driftZ: (Math.random() - 0.5) * 0.5,
+                    baseOpacity: 0.4 + Math.random() * 0.4
+                };
+
+                particleGroup.add(particle);
+                glitterParticles.push(particle);
+            }
+
+            console.log('✅ Created', glitterParticles.length, 'glitter particles');
+            return particleGroup;
+        }
+
+        function updateGlitterParticles(dt, time) {
+            glitterParticles.forEach(p => {
+                p.position.y = p.userData.baseY + Math.sin(time * p.userData.floatSpeed + p.userData.floatOffset) * 2;
+                p.position.x += p.userData.driftX * dt;
+                p.position.z += p.userData.driftZ * dt;
+
+                if (p.position.x > 35) p.position.x = -35;
+                if (p.position.x < -35) p.position.x = 35;
+                if (p.position.z > 35) p.position.z = -35;
+                if (p.position.z < -35) p.position.z = 35;
+
+                const twinkle = Math.sin(time * p.userData.twinkleSpeed + p.userData.twinkleOffset) * 0.5 + 0.5;
+                p.material.opacity = p.userData.baseOpacity * twinkle;
+
+                p.rotation.x += dt * 0.5;
+                p.rotation.y += dt * 0.7;
+            });
+        }
+
+        let fogCloudGroup = null;
+        let glitterGroup = null;
+        // === END FOG & GLITTER ===
 
         class PortalGateway {
             constructor(x, z) {
                 this.group = new THREE.Group();
-
                 const ringGeo = new THREE.TorusGeometry(3, 0.4, 20, 50);
                 const ringMat = new THREE.MeshStandardMaterial({
-                    color: 0x222222,
-                    roughness: 0.4,
-                    metalness: 0.9,
-                    emissive: 0x001133,
-                    emissiveIntensity: 0.3
+                    color: 0x222222, roughness: 0.4, metalness: 0.9,
+                    emissive: 0x001133, emissiveIntensity: 0.3
                 });
                 this.ringMesh = new THREE.Mesh(ringGeo, ringMat);
                 this.ringMesh.rotation.x = Math.PI / 2;
@@ -1106,35 +1350,21 @@
                 this.outerGlow.rotation.x = Math.PI / 2;
                 this.group.add(this.outerGlow);
 
-                const horizonVertShader = `
-                    varying vec2 vUv;
-                    void main() {
-                        vUv = uv;
-                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-                    }
-                `;
-
+                const horizonVertShader = `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
                 const horizonFragShader = `
-                    uniform float uTime;
-                    varying vec2 vUv;
-
+                    uniform float uTime; varying vec2 vUv;
                     void main() {
                         vec2 centeredUv = vUv - 0.5;
                         float dist = length(centeredUv);
-
                         float wave1 = sin(dist * 20.0 - uTime * 3.0);
                         float wave2 = sin(dist * 35.0 - uTime * 5.0 + 1.0);
                         float combinedWave = (wave1 + wave2) * 0.5;
-
                         vec3 colorDeep = vec3(0.0, 0.1, 0.4);
                         vec3 colorBright = vec3(0.0, 1.0, 0.8);
                         vec3 colorHot = vec3(0.6, 0.0, 1.0);
-
                         vec3 finalColor = mix(colorDeep, colorBright, combinedWave + 0.5);
                         finalColor += mix(colorHot, vec3(0.0), dist * 2.5);
-
                         float edgeMask = 1.0 - smoothstep(0.38, 0.48, dist);
-
                         gl_FragColor = vec4(finalColor, edgeMask * 0.9);
                     }
                 `;
@@ -1145,8 +1375,7 @@
                     uniforms: this.horizonUniforms,
                     vertexShader: horizonVertShader,
                     fragmentShader: horizonFragShader,
-                    transparent: true,
-                    side: THREE.DoubleSide
+                    transparent: true, side: THREE.DoubleSide
                 });
                 this.eventHorizon = new THREE.Mesh(horizonGeo, horizonMat);
                 this.eventHorizon.rotation.x = Math.PI / 2;
@@ -1158,10 +1387,7 @@
                 const lPos = new Float32Array(lightningCount * 3);
                 lightningGeo.setAttribute('position', new THREE.BufferAttribute(lPos, 3));
                 const lightningMat = new THREE.LineBasicMaterial({
-                    color: 0xffffff,
-                    opacity: 0.8,
-                    transparent: true,
-                    blending: THREE.AdditiveBlending
+                    color: 0xffffff, opacity: 0.8, transparent: true, blending: THREE.AdditiveBlending
                 });
                 this.lightning = new THREE.LineSegments(lightningGeo, lightningMat);
                 this.group.add(this.lightning);
@@ -1172,14 +1398,12 @@
 
                 this.group.position.set(x * TILE_SIZE, 1.5, z * TILE_SIZE);
                 this.animTime = 0;
-
                 scene.add(this.group);
             }
 
             update(dt) {
                 this.animTime += dt;
                 this.horizonUniforms.uTime.value = this.animTime;
-
                 this.outerGlow.rotation.z = this.animTime * 0.5;
                 
                 const positions = this.lightning.geometry.attributes.position.array;
@@ -1187,18 +1411,15 @@
                     const radiusBase = 3.3;
                     const angle1 = Math.random() * Math.PI * 2;
                     const angle2 = angle1 + (Math.random() - 0.5) * 0.5;
-
                     positions[i * 3] = Math.cos(angle1) * radiusBase + (Math.random() - 0.5);
                     positions[i * 3 + 1] = (Math.random() - 0.5) * 0.5;
                     positions[i * 3 + 2] = Math.sin(angle1) * radiusBase + (Math.random() - 0.5);
-
                     positions[i * 3 + 3] = Math.cos(angle2) * radiusBase + (Math.random() - 0.5);
                     positions[i * 3 + 4] = (Math.random() - 0.5) * 0.5;
                     positions[i * 3 + 5] = Math.sin(angle2) * radiusBase + (Math.random() - 0.5);
                 }
                 this.lightning.geometry.attributes.position.needsUpdate = true;
                 this.lightning.material.opacity = 0.3 + Math.random() * 0.7;
-
                 this.group.position.y = 1.5 + Math.sin(this.animTime * 0.5) * 0.2;
             }
         }
@@ -1212,18 +1433,13 @@
                 
                 const coreGeo = new THREE.IcosahedronGeometry(2, 1);
                 const coreMat = new THREE.MeshBasicMaterial({ 
-                    color: 0x00ffff, 
-                    wireframe: true,
-                    transparent: true,
-                    opacity: 0.8
+                    color: 0x00ffff, wireframe: true, transparent: true, opacity: 0.8
                 });
                 this.coreMesh = new THREE.Mesh(coreGeo, coreMat);
                 this.group.add(this.coreMesh);
 
                 const innerCoreMat = new THREE.MeshBasicMaterial({ 
-                    color: 0xffffff,
-                    transparent: true,
-                    opacity: 0.6
+                    color: 0xffffff, transparent: true, opacity: 0.6
                 });
                 this.innerCore = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 0), innerCoreMat);
                 this.group.add(this.innerCore);
@@ -1231,11 +1447,8 @@
                 this.blocks = [];
                 const blockGeo = new THREE.BoxGeometry(0.5, 0.5, 0.5);
                 const blockMat = new THREE.MeshStandardMaterial({
-                    color: 0x111111,
-                    emissive: 0x00ffff,
-                    emissiveIntensity: 0.3,
-                    metalness: 0.9,
-                    roughness: 0.1
+                    color: 0x111111, emissive: 0x00ffff, emissiveIntensity: 0.3,
+                    metalness: 0.9, roughness: 0.1
                 });
 
                 for(let i = 0; i < 12; i++) {
@@ -1243,27 +1456,17 @@
                     const radius = 3 + Math.random() * 1;
                     const theta = (i / 12) * Math.PI * 2;
                     const phi = Math.PI / 4 + (Math.random() - 0.5) * 0.5;
-                    
                     block.position.setFromSphericalCoords(radius, phi, theta);
                     block.lookAt(0, 0, 0);
                     block.scale.set(1, 2 + Math.random() * 2, 1);
-                    
                     this.group.add(block);
-                    this.blocks.push({
-                        mesh: block,
-                        originalPos: block.position.clone(),
-                        offset: i * 0.5
-                    });
+                    this.blocks.push({ mesh: block, originalPos: block.position.clone(), offset: i * 0.5 });
                 }
 
                 this.cables = [];
                 for(let i = 0; i < 6; i++) {
                     const cableGeo = new THREE.CylinderGeometry(0.1, 0.1, 3, 6);
-                    const cableMat = new THREE.MeshBasicMaterial({ 
-                        color: 0x00ffff,
-                        transparent: true,
-                        opacity: 0.6
-                    });
+                    const cableMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.6 });
                     const cable = new THREE.Mesh(cableGeo, cableMat);
                     const angle = (i / 6) * Math.PI * 2;
                     cable.position.set(Math.cos(angle) * 2, -2, Math.sin(angle) * 2);
@@ -1279,13 +1482,11 @@
                 this.group.position.set(x * TILE_SIZE, 2, z * TILE_SIZE);
                 this.animTime = 0;
                 this.flashTime = 0;
-                
                 scene.add(this.group);
             }
 
             takeDamage() {
                 if (this.destroyed) return;
-                
                 this.health--;
                 this.flashTime = 0.3;
                 sfx.playCoreHit();
@@ -1293,16 +1494,11 @@
 
                 const healthPct = this.health / this.maxHealth;
                 const color = new THREE.Color().setHSL(healthPct * 0.5, 1, 0.5);
-                
                 this.coreMesh.material.color = color;
                 this.light.color = color;
-                this.blocks.forEach(b => {
-                    b.mesh.material.emissive = color;
-                });
+                this.blocks.forEach(b => { b.mesh.material.emissive = color; });
 
-                if (this.health <= 0) {
-                    this.destroy();
-                }
+                if (this.health <= 0) this.destroy();
             }
 
             destroy() {
@@ -1314,9 +1510,7 @@
                     if (this.group.scale.x < 3) {
                         this.group.scale.multiplyScalar(1.02);
                         requestAnimationFrame(growAnim);
-                    } else {
-                        endGame();
-                    }
+                    } else { endGame(); }
                 };
                 growAnim();
 
@@ -1331,17 +1525,11 @@
             }
 
             update(dt) {
-                if (this.destroyed) {
-                    this.group.rotation.y += dt * 2;
-                    return;
-                }
-
+                if (this.destroyed) { this.group.rotation.y += dt * 2; return; }
                 this.animTime += dt;
-
                 const pulse = 1 + Math.sin(this.animTime * 3) * 0.1;
                 this.coreMesh.scale.setScalar(pulse);
                 this.innerCore.scale.setScalar(pulse * 0.8);
-                
                 this.coreMesh.rotation.y += dt * 0.5;
                 this.coreMesh.rotation.z += dt * 0.3;
                 this.innerCore.rotation.y -= dt * 0.7;
@@ -1367,68 +1555,31 @@
 
         function createCharacter(type, scale, color, eyeColor) {
             const charGroup = new THREE.Group();
-            
             const armorMat = new THREE.MeshStandardMaterial({ 
-                color: color,
-                metalness: 0.9, 
-                roughness: 0.1,
-                emissive: color,
-                emissiveIntensity: 0.3
+                color: color, metalness: 0.9, roughness: 0.1,
+                emissive: color, emissiveIntensity: 0.3
             });
 
-            let torsoScale = 1;
-            let limbScale = 1;
-            let headScale = 1;
-            
-            if (type === 'SPEED') {
-                torsoScale = 0.7;
-                limbScale = 1.3;
-                headScale = 0.8;
-            } else if (type === 'TANK') {
-                torsoScale = 1.5;
-                limbScale = 0.8;
-                headScale = 1.2;
-            } else if (type === 'BOSS') {
-                torsoScale = 2;
-                limbScale = 1.5;
-                headScale = 1.8;
-            } else if (type === 'ASSASSIN') {
-                torsoScale = 0.6;
-                limbScale = 1.5;
-                headScale = 0.7;
-            } else if (type === 'JUGGERNAUT') {
-                torsoScale = 2.5;
-                limbScale = 1.0;
-                headScale = 1.5;
-            } else if (type === 'GHOST') {
-                torsoScale = 0.9;
-                limbScale = 1.1;
-                headScale = 1.0;
-            } else if (type === 'HEALER') {
-                torsoScale = 1.1;
-                limbScale = 1.0;
-                headScale = 1.1;
-            } else if (type === 'SPLITTER') {
-                torsoScale = 0.8;
-                limbScale = 0.9;
-                headScale = 0.9;
-            } else if (type === 'NATRON') {
-                torsoScale = 1.3;
-                limbScale = 1.2;
-                headScale = 1.3;
-            }
+            let torsoScale = 1, limbScale = 1, headScale = 1;
+            if (type === 'SPEED') { torsoScale = 0.7; limbScale = 1.3; headScale = 0.8; }
+            else if (type === 'TANK') { torsoScale = 1.5; limbScale = 0.8; headScale = 1.2; }
+            else if (type === 'BOSS') { torsoScale = 2; limbScale = 1.5; headScale = 1.8; }
+            else if (type === 'ASSASSIN') { torsoScale = 0.6; limbScale = 1.5; headScale = 0.7; }
+            else if (type === 'JUGGERNAUT') { torsoScale = 2.5; limbScale = 1.0; headScale = 1.5; }
+            else if (type === 'GHOST') { torsoScale = 0.9; limbScale = 1.1; headScale = 1.0; }
+            else if (type === 'HEALER') { torsoScale = 1.1; limbScale = 1.0; headScale = 1.1; }
+            else if (type === 'SPLITTER') { torsoScale = 0.8; limbScale = 0.9; headScale = 0.9; }
+            else if (type === 'NATRON') { torsoScale = 1.3; limbScale = 1.2; headScale = 1.3; }
 
             const torso = new THREE.Mesh(
-                new THREE.CapsuleGeometry(0.35 * torsoScale * scale, 0.8 * scale, 8, 16), 
-                armorMat
+                new THREE.CapsuleGeometry(0.35 * torsoScale * scale, 0.8 * scale, 8, 16), armorMat
             );
             torso.position.y = 0;
             torso.castShadow = true;
             charGroup.add(torso);
 
             const head = new THREE.Mesh(
-                new THREE.SphereGeometry(0.25 * headScale * scale, 16, 16), 
-                armorMat
+                new THREE.SphereGeometry(0.25 * headScale * scale, 16, 16), armorMat
             );
             head.position.y = (0.4 + 0.25 * headScale) * scale;
             head.castShadow = true;
@@ -1458,17 +1609,95 @@
             legR.castShadow = true;
             torso.add(legL, legR);
 
-            charGroup.userData = {
-                torso, head, armL, armR, legL, legR, 
-                type, scale, limbScale
-            };
-
+            charGroup.userData = { torso, head, armL, armR, legL, legR, type, scale, limbScale };
             return charGroup;
+        }
+
+        function collapseTileWithTower() {
+            const towersOnTiles = entities.towers.filter(t => !t.isCollapsed);
+            if (towersOnTiles.length === 0) return;
+
+            const randomTower = towersOnTiles[Math.floor(Math.random() * towersOnTiles.length)];
+            const tilePos = randomTower.mesh.position;
+            
+            const tile = entities.tiles.find(t => 
+                Math.abs(t.position.x - tilePos.x) < 0.1 && 
+                Math.abs(t.position.z - tilePos.z) < 0.1
+            );
+
+            if (tile && !tile.userData.collapsed) {
+                collapseTile(tile, randomTower);
+            }
+        }
+
+        function collapseTile(tile, tower) {
+            tile.userData.collapsed = true;
+            tile.userData.collapsedTower = tower;
+            tower.isCollapsed = true;
+
+            sfx.playCollapse();
+            shake.amount = 1;
+
+            const fallAnim = () => {
+                if (tile.position.y > -10) {
+                    tile.position.y -= 0.2;
+                    tower.mesh.position.y -= 0.2;
+                    requestAnimationFrame(fallAnim);
+                } else {
+                    tile.visible = false;
+                    tower.mesh.visible = false;
+                }
+            };
+            fallAnim();
+
+            gameState.collapsedTiles.push({tile, tower});
+
+            const msg = document.getElementById('msg-area');
+            msg.innerText = "TILE COLLAPSED!";
+            msg.style.opacity = 1;
+            setTimeout(() => msg.style.opacity = 0, 2000);
+        }
+
+        window.repairTile = function() {
+            if (!selectedTile || !selectedTile.userData.collapsed) return;
+            
+            const repairCost = 200;
+            if (gameState.money < repairCost) {
+                sfx.playError();
+                return;
+            }
+
+            gameState.money -= repairCost;
+            
+            const collapsedData = gameState.collapsedTiles.find(c => c.tile === selectedTile);
+            if (collapsedData) {
+                selectedTile.userData.collapsed = false;
+                selectedTile.userData.hasTower = false;
+                selectedTile.userData.collapsedTower = null;
+                selectedTile.visible = true;
+                selectedTile.position.y = -0.5;
+                selectedTile.material.color.setHex(0x444444);
+                selectedTile.material.emissive.setHex(0x000000);
+                selectedTile.material.emissiveIntensity = 0;
+
+                const tower = collapsedData.tower;
+                scene.remove(tower.mesh);
+                const towerIndex = entities.towers.indexOf(tower);
+                if (towerIndex > -1) entities.towers.splice(towerIndex, 1);
+
+                const colIndex = gameState.collapsedTiles.indexOf(collapsedData);
+                if (colIndex > -1) gameState.collapsedTiles.splice(colIndex, 1);
+
+                sfx.playUpgrade();
+                spawnParticles(selectedTile.position, 0x00ff00, 20);
+            }
+
+            hideTowerInfo();
+            updateUI();
         }
 
         window.updateLighting = function(type, value) {
             value = parseFloat(value);
-            
             if (type === 'ambient') {
                 ambientLight.intensity = value / 100;
                 document.getElementById('ambient-val').innerText = (value / 100).toFixed(2);
@@ -1490,12 +1719,6 @@
         window.togglePause = function() {
             isPaused = !isPaused;
             document.getElementById('pause-overlay').style.display = isPaused ? 'flex' : 'none';
-            
-            if (bgMusic && sfx.enabled) {
-                if (isPaused) bgMusic.pause();
-                else bgMusic.play().catch(e => {});
-            }
-            
             const btn = document.querySelector('.control-btn.pause');
             if (btn) btn.innerText = isPaused ? '▶️ RESUME' : '⏸️ PAUSE';
         }
@@ -1511,13 +1734,11 @@
             entities.enemies = [];
             entities.projectiles = [];
             entities.tiles = [];
+            gameState.collapsedTiles = [];
             neuroCore = null;
             portalGateway = null;
-            
             isPaused = false;
             gameState.isGameOver = true;
-            
-            if (bgMusic) bgMusic.pause();
             
             document.getElementById('pause-overlay').style.display = 'none';
             document.getElementById('game-over-screen').style.display = 'none';
@@ -1527,7 +1748,6 @@
             document.getElementById('light-panel').style.display = 'none';
             document.getElementById('tower-info-panel').style.display = 'none';
             document.getElementById('start-screen').style.display = 'flex';
-            
             loadHighscores();
         }
 
@@ -1535,7 +1755,6 @@
             document.getElementById('pause-overlay').style.display = 'none';
             document.getElementById('game-over-screen').style.display = 'none';
             document.getElementById('victory-screen').style.display = 'none';
-            
             startGame(gameState.levelIndex);
         }
 
@@ -1552,12 +1771,12 @@
                 btn.classList.remove('delete-mode');
                 applyTowerRestrictions();
             }
-            
             hideTowerInfo();
         }
 
         function showTowerInfo(tower) {
             selectedTower = tower;
+            selectedTile = null;
             const panel = document.getElementById('tower-info-panel');
             const typeData = TOWER_TYPES[tower.typeIndex];
             const currentUpgrade = typeData.upgrades[tower.level];
@@ -1581,20 +1800,44 @@
             const sellValue = Math.floor(tower.getTotalCost() * 0.7);
             document.querySelector('.sell-btn').innerText = `SELL (${sellValue} CR)`;
             
+            document.getElementById('repair-btn').style.display = 'none';
+            panel.style.display = 'block';
+        }
+
+        function showTileInfo(tile) {
+            selectedTile = tile;
+            selectedTower = null;
+            const panel = document.getElementById('tower-info-panel');
+            
+            document.getElementById('tower-info-name').innerText = 'COLLAPSED TILE';
+            document.getElementById('tower-info-level').innerText = 'Status: Destroyed';
+            document.getElementById('tower-info-damage').innerText = '';
+            document.getElementById('tower-info-range').innerText = '';
+            document.getElementById('tower-info-rate').innerText = '';
+            
+            document.getElementById('upgrade-btn').style.display = 'none';
+            document.querySelector('.sell-btn').style.display = 'none';
+            
+            const repairBtn = document.getElementById('repair-btn');
+            repairBtn.style.display = 'block';
+            repairBtn.disabled = gameState.money < 200;
+            
             panel.style.display = 'block';
         }
 
         function hideTowerInfo() {
             selectedTower = null;
+            selectedTile = null;
             document.getElementById('tower-info-panel').style.display = 'none';
+            document.getElementById('upgrade-btn').style.display = 'block';
+            document.querySelector('.sell-btn').style.display = 'block';
+            document.getElementById('repair-btn').style.display = 'none';
         }
 
         window.upgradeTower = function() {
             if (!selectedTower) return;
-            
             const typeData = TOWER_TYPES[selectedTower.typeIndex];
             if (selectedTower.level >= typeData.upgrades.length - 1) return;
-            
             const nextUpgrade = typeData.upgrades[selectedTower.level + 1];
             if (gameState.money >= nextUpgrade.cost) {
                 gameState.money -= nextUpgrade.cost;
@@ -1609,7 +1852,6 @@
 
         window.sellTower = function() {
             if (!selectedTower) return;
-            
             const sellValue = Math.floor(selectedTower.getTotalCost() * 0.7);
             gameState.money += sellValue;
             
@@ -1635,16 +1877,13 @@
         function saveHighscore() {
             const scores = JSON.parse(localStorage.getItem('highscores') || '[]');
             const levelName = gameState.levelIndex === 4 ? 'Sandbox' : `Level ${gameState.levelIndex + 1}`;
-            
             scores.push({
                 level: levelName,
                 wave: gameState.wave - 1,
                 date: new Date().toLocaleDateString()
             });
-            
             scores.sort((a, b) => b.wave - a.wave);
             scores.splice(10);
-            
             localStorage.setItem('highscores', JSON.stringify(scores));
         }
 
@@ -1652,91 +1891,20 @@
             const scores = JSON.parse(localStorage.getItem('highscores') || '[]');
             const container = document.getElementById('highscore-list');
             container.innerHTML = '';
-            
             if (scores.length === 0) {
                 container.innerHTML = '<div style="color:#666; text-align:center; padding:20px;">No scores yet</div>';
                 return;
             }
-            
             scores.forEach((score, i) => {
                 const entry = document.createElement('div');
                 entry.className = 'highscore-entry';
-                entry.innerHTML = `
-                    <span>${i + 1}. ${score.level}</span>
-                    <span>Wave ${score.wave}</span>
-                `;
+                entry.innerHTML = `<span>${i + 1}. ${score.level}</span><span>Wave ${score.wave}</span>`;
                 container.appendChild(entry);
             });
         }
 
-        // SANDBOX FUNCTIONS
-        window.openSandbox = function() {
-            document.getElementById('start-screen').style.display = 'none';
-            document.getElementById('sandbox-setup-screen').style.display = 'flex';
-            updateSandboxUI();
-        }
-
-        window.closeSandbox = function() {
-            document.getElementById('sandbox-setup-screen').style.display = 'none';
-            document.getElementById('start-screen').style.display = 'flex';
-        }
-
-        function updateSandboxUI() {
-            document.getElementById('sandbox-difficulty').oninput = function() {
-                const val = (this.value / 100).toFixed(1);
-                document.getElementById('sandbox-difficulty-val').innerText = val + 'x';
-            };
-            
-            document.getElementById('sandbox-normal').oninput = function() {
-                document.getElementById('sandbox-normal-val').innerText = this.value + '%';
-            };
-            document.getElementById('sandbox-speed').oninput = function() {
-                document.getElementById('sandbox-speed-val').innerText = this.value + '%';
-            };
-            document.getElementById('sandbox-tank').oninput = function() {
-                document.getElementById('sandbox-tank-val').innerText = this.value + '%';
-            };
-            
-            document.getElementById('sandbox-hue').oninput = function() {
-                const hue = this.value;
-                document.getElementById('sandbox-color-preview').style.background = 
-                    `hsl(${hue}, 100%, 50%)`;
-            };
-            document.getElementById('sandbox-color-preview').style.background = 'hsl(120, 100%, 50%)';
-        }
-
-        window.startSandboxGame = function() {
-            gameState.sandboxConfig = {
-                startingMoney: parseInt(document.getElementById('sandbox-money').value),
-                difficultyScale: parseFloat(document.getElementById('sandbox-difficulty').value) / 100,
-                enemyCount: parseInt(document.getElementById('sandbox-enemy-count').value),
-                bossInterval: parseInt(document.getElementById('sandbox-boss-interval').value),
-                maxWaves: parseInt(document.getElementById('sandbox-max-waves').value) || null,
-                enemyMix: {
-                    normal: parseFloat(document.getElementById('sandbox-normal').value) / 100,
-                    speed: parseFloat(document.getElementById('sandbox-speed').value) / 100,
-                    tank: parseFloat(document.getElementById('sandbox-tank').value) / 100
-                },
-                hue: parseInt(document.getElementById('sandbox-hue').value),
-                color: new THREE.Color().setHSL(
-                    parseInt(document.getElementById('sandbox-hue').value) / 360, 
-                    1.0, 
-                    0.5
-                ),
-                customPath: [
-                    {x:-8,z:-8}, {x:-8,z:-2}, {x:0,z:-2}, 
-                    {x:0,z:2}, {x:8,z:2}, {x:8,z:8}
-                ],
-                towerRestrictions: [true, true, true]
-            };
-            
-            startGame(4);
-        }
-
         window.startGame = function(lvlIndex) {
             sfx.init();
-            if (sfx.enabled) loadBackgroundMusic();
-            
             texZero = createCharTexture('0', '#00ff41');
             texOne = createCharTexture('1', '#00ff41');
             texHex = createCharTexture('⬡', '#00ffff');
@@ -1747,9 +1915,11 @@
             gameState.levelIndex = lvlIndex;
             gameState.wave = 1;
             gameState.isGameOver = false;
+            gameState.collapsedTiles = [];
             isPaused = false;
             deleteMode = false;
             selectedTower = null;
+            selectedTile = null;
 
             const level = LEVELS[lvlIndex];
             
@@ -1807,9 +1977,7 @@
             document.querySelectorAll('.tower-btn').forEach((b, i) => {
                 if (i < 3) b.classList.toggle('selected', i === index);
             });
-            
             if (deleteMode) toggleDeleteMode();
-            
             sfx.playBuild();
         }
 
@@ -1834,7 +2002,10 @@
                     mesh.receiveShadow = true;
                     mesh.castShadow = true;
                     
-                    mesh.userData = { isPath, gridX: x, gridZ: z, hasTower: false };
+                    mesh.userData = { 
+                        isPath, gridX: x, gridZ: z, hasTower: false,
+                        collapsed: false, collapsedTower: null
+                    };
                     
                     scene.add(mesh);
                     entities.tiles.push(mesh);
@@ -1871,7 +2042,6 @@
                 this.canHeal = false;
                 this.healCooldown = 0;
                 this.splits = 0;
-                
                 this.isNatron = false;
                 this.damageByType = {};
 
@@ -1887,53 +2057,27 @@
                     this.mesh = new THREE.Mesh(balloonGeo, balloonMat);
                     this.mesh.castShadow = true;
                 } else {
-                    if (type === 'TANK') { 
-                        hp *= 3; speed *= 0.6; charScale = 1.2; 
-                        color = 0x00ff00; eyeColor = 0xff0000; 
+                    if (type === 'TANK') { hp *= 3; speed *= 0.6; charScale = 1.2; color = 0x00ff00; eyeColor = 0xff0000; }
+                    if (type === 'SPEED') { hp *= 0.6; speed *= 1.4; charScale = 0.6; color = 0xffff00; eyeColor = 0xff8800; }
+                    if (type === 'BOSS') { hp *= 10; speed *= 0.4; charScale = 1.8; color = 0xff00ff; eyeColor = 0x00ffff; }
+                    if (type === 'ASSASSIN') { hp *= 0.4; speed *= 2.0; charScale = 0.7; color = 0x8800ff; eyeColor = 0xff00ff; this.reward = 30; }
+                    if (type === 'JUGGERNAUT') { hp *= 6; speed *= 0.3; charScale = 1.6; color = 0x444444; eyeColor = 0xff0000; }
+                    if (type === 'GHOST') { 
+                        hp *= 1.5; speed *= 0.8; charScale = 0.9; color = 0x00ffaa; eyeColor = 0xffffff;
+                        this.canPhase = true; this.phaseTimer = 3;
                     }
-                    if (type === 'SPEED') { 
-                        hp *= 0.6; speed *= 1.4; charScale = 0.6; 
-                        color = 0xffff00; eyeColor = 0xff8800; 
+                    if (type === 'HEALER') { 
+                        hp *= 2; speed *= 0.7; charScale = 1.0; color = 0x00ff88; eyeColor = 0xffff00;
+                        this.canHeal = true; this.healCooldown = 0;
                     }
-                    if (type === 'BOSS') { 
-                        hp *= 10; speed *= 0.4; charScale = 1.8; 
-                        color = 0xff00ff; eyeColor = 0x00ffff; 
+                    if (type === 'SPLITTER') { 
+                        hp *= 1.5; speed *= 0.9; charScale = 0.9; color = 0xff8800; eyeColor = 0xffff00;
+                        this.canSplit = true; this.splits = 0; this.maxSplits = 2;
                     }
-                    if (type === 'ASSASSIN') {
-                        hp *= 0.4; speed *= 2.0; charScale = 0.7;
-                        color = 0x8800ff; eyeColor = 0xff00ff;
-                        this.reward = 30;
+                    if (type === 'NATRON') { 
+                        hp *= 4; speed *= 0.7; charScale = 1.1; color = 0xffaa00; eyeColor = 0xff0000;
+                        this.isNatron = true; this.reward = 50;
                     }
-                    if (type === 'JUGGERNAUT') {
-                        hp *= 6; speed *= 0.3; charScale = 1.6;
-                        color = 0x444444; eyeColor = 0xff0000;
-                    }
-                    if (type === 'GHOST') {
-                        hp *= 1.5; speed *= 0.8; charScale = 0.9;
-                        color = 0x00ffaa; eyeColor = 0xffffff;
-                        this.canPhase = true;
-                        this.phaseTimer = 3;
-                    }
-                    if (type === 'HEALER') {
-                        hp *= 2; speed *= 0.7; charScale = 1.0;
-                        color = 0x00ff88; eyeColor = 0xffff00;
-                        this.canHeal = true;
-                        this.healCooldown = 0;
-                    }
-                    if (type === 'SPLITTER') {
-                        hp *= 1.5; speed *= 0.9; charScale = 0.9;
-                        color = 0xff8800; eyeColor = 0xffff00;
-                        this.canSplit = true;
-                        this.splits = 0;
-                        this.maxSplits = 2;
-                    }
-                    if (type === 'NATRON') {
-                        hp *= 4; speed *= 0.7; charScale = 1.1;
-                        color = 0xffaa00; eyeColor = 0xff0000;
-                        this.isNatron = true;
-                        this.reward = 50;
-                    }
-
                     this.mesh = createCharacter(type, charScale, color, eyeColor);
                 }
                 
@@ -1956,13 +2100,11 @@
                     this.hpBar.position.y = charScale * 2.5;
                     this.mesh.add(this.hpBar);
                 }
-
                 scene.add(this.mesh);
             }
 
             update(dt) {
                 if (this.dead) return;
-                
                 dt *= gameSpeed;
                 this.animTime += dt;
                 
@@ -1982,9 +2124,7 @@
                             });
                         } else {
                             this.mesh.traverse(child => {
-                                if (child.material) {
-                                    child.material.opacity = 1.0;
-                                }
+                                if (child.material) child.material.opacity = 1.0;
                             });
                         }
                     }
@@ -2017,7 +2157,6 @@
 
                 const targetGrid = path[this.pathIndex + 1];
                 const targetPos = new THREE.Vector3(targetGrid.x * TILE_SIZE, this.mesh.position.y, targetGrid.z * TILE_SIZE);
-                
                 const dir = new THREE.Vector3().subVectors(targetPos, this.mesh.position);
                 const dist = dir.length();
 
@@ -2025,10 +2164,8 @@
                     this.pathIndex++;
                 } else {
                     dir.normalize();
-                    
                     const angle = Math.atan2(dir.x, dir.z);
                     this.mesh.rotation.y = angle;
-                    
                     this.mesh.position.add(dir.multiplyScalar(this.speed * dt));
                     
                     if (this.mesh.userData.legL && !this.isBalloon) {
@@ -2048,14 +2185,10 @@
                 if (this.isPhasing) return;
                 
                 if (this.isNatron && towerType !== undefined) {
-                    if (!this.damageByType[towerType]) {
-                        this.damageByType[towerType] = 0;
-                    }
-                    
+                    if (!this.damageByType[towerType]) this.damageByType[towerType] = 0;
                     const maxDamageFromType = this.maxHp * 0.35;
                     const remainingAllowedDamage = maxDamageFromType - this.damageByType[towerType];
                     const actualDamage = Math.min(dmg, remainingAllowedDamage);
-                    
                     this.damageByType[towerType] += actualDamage;
                     this.hp -= actualDamage;
                 } else {
@@ -2116,11 +2249,7 @@
             hitBase() {
                 this.dead = true;
                 scene.remove(this.mesh);
-                
-                if (neuroCore && !neuroCore.destroyed) {
-                    neuroCore.takeDamage();
-                }
-                
+                if (neuroCore && !neuroCore.destroyed) neuroCore.takeDamage();
                 gameState.lives--;
                 updateUI();
             }
@@ -2133,13 +2262,13 @@
                 const typeData = TOWER_TYPES[typeIndex];
                 this.typeData = typeData;
                 this.data = typeData.upgrades[0];
+                this.isCollapsed = false;
                 
                 this.mesh = new THREE.Group();
                 this.mesh.position.set(x, 1, z);
                 this.mesh.userData.tower = this;
 
                 this.createGeometry();
-                
                 this.mesh.scale.set(0.1,0.1,0.1);
                 this.cooldown = 0;
                 this.animTime = 0;
@@ -2151,12 +2280,8 @@
                 }
 
                 const size = 1 + this.level * 0.15;
-                
                 const coreGeo = new THREE.IcosahedronGeometry(0.8 * size, 0);
-                const coreMat = new THREE.MeshBasicMaterial({ 
-                    color: this.data.color, 
-                    wireframe: true 
-                });
+                const coreMat = new THREE.MeshBasicMaterial({ color: this.data.color, wireframe: true });
                 this.hackerCore = new THREE.Mesh(coreGeo, coreMat);
                 this.hackerCore.position.y = 1;
                 this.mesh.add(this.hackerCore);
@@ -2169,10 +2294,7 @@
                 }
                 cloudGeo.setAttribute('position', new THREE.BufferAttribute(cloudPos, 3));
                 const cloudMat = new THREE.PointsMaterial({ 
-                    color: this.data.color, 
-                    size: 0.3, 
-                    transparent: true, 
-                    opacity: 0.7 
+                    color: this.data.color, size: 0.3, transparent: true, opacity: 0.7
                 });
                 this.dataCloud = new THREE.Points(cloudGeo, cloudMat);
                 this.dataCloud.position.y = 1;
@@ -2180,9 +2302,7 @@
 
                 const baseGeo = new THREE.CylinderGeometry(1.5 * size, 2 * size, 0.5, 6);
                 const baseMat = new THREE.MeshStandardMaterial({ 
-                    color: 0x222222,
-                    emissive: this.data.color,
-                    emissiveIntensity: 0.3
+                    color: 0x222222, emissive: this.data.color, emissiveIntensity: 0.3
                 });
                 const base = new THREE.Mesh(baseGeo, baseMat);
                 base.position.y = 0.25;
@@ -2226,6 +2346,8 @@
                 if (this.dataCloud) {
                     this.dataCloud.rotation.y = -this.animTime * 0.5;
                 }
+
+                if (this.isCollapsed) return;
 
                 let target = null;
                 let minDist = this.data.range;
@@ -2277,9 +2399,7 @@
                 
                 const tex = Math.random() > 0.5 ? texZero : texOne;
                 const mat = new THREE.SpriteMaterial({ 
-                    map: tex, 
-                    color: data.color, 
-                    transparent: true 
+                    map: tex, color: data.color, transparent: true
                 });
                 this.mesh = new THREE.Sprite(mat);
                 this.mesh.position.copy(pos);
@@ -2294,7 +2414,6 @@
 
             update(dt) {
                 if (!this.active) return;
-                
                 if ((this.target.dead || this.target.isPhasing) && !this.data.aoe) {
                     this.active = false; 
                     scene.remove(this.mesh); 
@@ -2304,7 +2423,6 @@
                 const targetPos = this.target.mesh.position.clone();
                 targetPos.y += 1;
                 const dir = new THREE.Vector3().subVectors(targetPos, this.mesh.position).normalize();
-                
                 this.mesh.position.add(dir.multiplyScalar(this.speed * dt));
 
                 if (this.mesh.position.distanceTo(targetPos) < 1.0) {
@@ -2355,6 +2473,10 @@
 
         function startWave() {
             if (gameState.isGameOver) return;
+            
+            if (gameState.wave > 1) {
+                collapseTileWithTower();
+            }
             
             const msg = document.getElementById('msg-area');
             msg.innerText = "WAVE " + gameState.wave;
@@ -2441,7 +2563,6 @@
                     clearInterval(check);
                     gameState.wave++;
                     updateUI();
-                    
                     setTimeout(startWave, 3000);
                 }
             }, 1000);
@@ -2452,12 +2573,10 @@
             saveHighscore();
             document.getElementById('victory-msg').innerText = `Completed ${gameState.wave - 1} Waves!`;
             document.getElementById('victory-screen').style.display = 'flex';
-            if (bgMusic) bgMusic.pause();
         }
 
         function onPointerDown(e) {
             sfx.init();
-            
             if (gameState.isGameOver || isPaused) return;
             if (e.target.tagName !== 'CANVAS') return;
 
@@ -2470,7 +2589,8 @@
             
             if (towerIntersects.length > 0) {
                 let tower = null;
-                let obj = towerIntersects[0].object;
+                let obj
+ = towerIntersects[0].object;
                 while (obj && !tower) {
                     if (obj.userData.tower) tower = obj.userData.tower;
                     obj = obj.parent;
@@ -2491,9 +2611,15 @@
             if (intersects.length > 0) {
                 hideTowerInfo();
                 
+                const obj = intersects[0].object;
+                
+                if (obj.userData.collapsed) {
+                    showTileInfo(obj);
+                    return;
+                }
+                
                 if (deleteMode) return;
                 
-                const obj = intersects[0].object;
                 const typeData = TOWER_TYPES[gameState.selectedTowerType];
                 const cost = typeData.baseCost;
 
@@ -2524,7 +2650,6 @@
             saveHighscore();
             document.getElementById('final-score').innerText = "WAVES SURVIVED: " + (gameState.wave - 1);
             document.getElementById('game-over-screen').style.display = 'flex';
-            if (bgMusic) bgMusic.pause();
         }
 
         function onResize() {
@@ -2580,12 +2705,19 @@
             matrixSkyDome = createMatrixSkyDome();
             scene.add(matrixSkyDome);
 
+            // === SCHRITT 2: Nebel Wolken und Glitzer Partikel erstellen ===
+            fogCloudGroup = createFogClouds();
+            scene.add(fogCloudGroup);
+
+            glitterGroup = createGlitterParticles();
+            scene.add(glitterGroup);
+            // === END SCHRITT 2 ===
+
             raycaster = new THREE.Raycaster();
             mouse = new THREE.Vector2();
 
             window.addEventListener('resize', onResize);
             window.addEventListener('pointerdown', onPointerDown);
-            
             loadHighscores();
             animate();
         }
@@ -2602,6 +2734,13 @@
             if (matrixSkyDome) {
                 matrixSkyDome.userData.uniforms.uTime.value = time;
             }
+
+            // === SCHRITT 3: Update Nebel und Glitzer (nur wenn nicht pausiert) ===
+            if (!isPaused && !gameState.isGameOver) {
+                updateFogClouds(dt, time);
+                updateGlitterParticles(dt, time);
+            }
+            // === END SCHRITT 3 ===
 
             if (shake.amount > 0) {
                 camera.position.x += (Math.random() - 0.5) * shake.amount;
@@ -2626,7 +2765,6 @@
                 });
 
                 entities.towers.forEach(t => t.update(dt));
-
                 entities.projectiles.forEach((p, i) => {
                     p.update(dt);
                     if (!p.active) entities.projectiles.splice(i, 1);
