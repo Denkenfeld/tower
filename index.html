@@ -175,75 +175,6 @@
             text-shadow: 0 0 20px #fff; opacity: 0; transition: opacity 0.5s;
         }
 
-        /* SANDBOX SETUP */
-        .sandbox-container {
-            display: flex; gap: 30px; max-width: 1200px; align-items: flex-start;
-        }
-        
-        .path-builder-section {
-            background: rgba(20,20,20,0.9); padding: 20px; border-radius: 10px; border: 1px solid #0f0;
-        }
-        
-        #pathCanvas {
-            border: 2px solid #0f0; background: #000; cursor: crosshair;
-            box-shadow: 0 0 20px rgba(0,255,0,0.3);
-        }
-        
-        .controls-section {
-            background: rgba(20,20,20,0.9); padding: 20px; border-radius: 10px;
-            border: 1px solid #0ff; min-width: 300px; max-width: 400px;
-        }
-        
-        .slider-group {
-            margin: 15px 0;
-        }
-        
-        .slider-group label {
-            color: #fff; display: block; margin-bottom: 5px; font-size: 14px;
-        }
-        
-        .slider-group input[type="range"] {
-            width: 100%; height: 6px; background: #333; outline: none; border-radius: 3px;
-        }
-        
-        .slider-group input[type="range"]::-webkit-slider-thumb {
-            width: 20px; height: 20px; background: #0ff; cursor: pointer; border-radius: 50%;
-            box-shadow: 0 0 10px #0ff;
-        }
-        
-        .preset-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;
-        }
-        
-        .preset-btn {
-            padding: 10px; background: #111; border: 1px solid #555; color: #fff;
-            cursor: pointer; transition: 0.2s; font-size: 12px; font-family: 'Orbitron';
-        }
-        .preset-btn:hover { border-color: #0f0; background: #002200; }
-        
-        .save-slot {
-            background: #111; border: 1px solid #333; padding: 10px; margin: 5px 0;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .save-slot:hover { border-color: #0ff; }
-        .save-name { color: #0ff; font-size: 14px; }
-        .save-actions { display: flex; gap: 5px; }
-        
-        .error-msg {
-            color: #f00; background: rgba(255,0,0,0.1); border: 1px solid #f00;
-            padding: 10px; margin: 10px 0; border-radius: 5px; font-size: 14px;
-            display: none;
-        }
-        
-        .tower-restriction {
-            display: flex; align-items: center; gap: 10px; margin: 5px 0; padding: 5px;
-            background: #111; border-radius: 5px;
-        }
-        .tower-restriction input[type="checkbox"] {
-            width: 20px; height: 20px; cursor: pointer;
-        }
-        .tower-restriction label { color: #fff; font-size: 14px; cursor: pointer; flex: 1; }
-
         /* PAUSE SCREEN */
         .pause-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -371,7 +302,7 @@
         </div>
     </div>
 
-    <!-- SANDBOX SETUP - gekürzt für Platz -->
+    <!-- SANDBOX SETUP -->
     <div id="sandbox-setup-screen" class="overlay-screen" style="display:none;">
         <h1 style="-webkit-text-fill-color: #0f0;">SANDBOX MODE</h1>
         <div style="text-align:center; padding:20px;">
@@ -400,13 +331,14 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-        // --- IMPROVED AUDIO ENGINE ---
+        // --- SONIC WAVE AUDIO ENGINE ---
         class SfxEngine {
             constructor() {
                 this.ctx = null;
                 this.masterGain = null;
                 this.initialized = false;
                 this.enabled = true;
+                this.masterVolume = 0.3;
             }
 
             init() {
@@ -414,7 +346,7 @@
                 try {
                     this.ctx = new (window.AudioContext || window.webkitAudioContext)();
                     this.masterGain = this.ctx.createGain();
-                    this.masterGain.gain.value = 0.3;
+                    this.masterGain.gain.value = this.masterVolume;
                     this.masterGain.connect(this.ctx.destination);
                     this.initialized = true;
                     if (this.ctx.state === 'suspended') this.ctx.resume();
@@ -423,247 +355,383 @@
                 }
             }
 
-            playAdvancedTone(config) {
+            // HACKER-0: Sonic Wave
+            playSonicWave() {
                 if (!this.ctx || !this.initialized || !this.enabled) return;
                 try {
                     const now = this.ctx.currentTime;
-                    const { freq, type, duration, attack, decay, sustain, release, filterFreq, detune } = config;
-
+                    const gainNode = this.ctx.createGain();
+                    gainNode.connect(this.masterGain);
+                    
                     const osc = this.ctx.createOscillator();
-                    osc.type = type || 'sine';
-                    osc.frequency.setValueAtTime(freq, now);
-                    if (detune) osc.detune.setValueAtTime(detune, now);
-
-                    let osc2 = null;
-                    if (config.harmonic) {
-                        osc2 = this.ctx.createOscillator();
-                        osc2.type = config.harmonicType || 'sine';
-                        osc2.frequency.setValueAtTime(freq * config.harmonic, now);
-                        osc2.detune.setValueAtTime(config.harmonicDetune || 0, now);
-                    }
-
-                    const filter = this.ctx.createBiquadFilter();
-                    filter.type = 'lowpass';
-                    filter.frequency.setValueAtTime(filterFreq || 2000, now);
-                    filter.Q.setValueAtTime(1, now);
-
-                    const gain = this.ctx.createGain();
-                    gain.gain.setValueAtTime(0, now);
-                    gain.gain.linearRampToValueAtTime(1, now + (attack || 0.01));
-                    gain.gain.linearRampToValueAtTime(sustain || 0.7, now + (attack || 0.01) + (decay || 0.05));
-                    gain.gain.setValueAtTime(sustain || 0.7, now + duration - (release || 0.1));
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
-
-                    osc.connect(filter);
-                    filter.connect(gain);
-                    if (osc2) {
-                        osc2.connect(filter);
-                    }
-                    gain.connect(this.masterGain);
-
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(100, now);
+                    osc.frequency.linearRampToValueAtTime(50, now + 0.5);
+                    
+                    const lfo = this.ctx.createOscillator();
+                    lfo.frequency.setValueAtTime(8, now);
+                    const lfoGain = this.ctx.createGain();
+                    lfoGain.gain.setValueAtTime(20, now);
+                    
+                    lfo.connect(lfoGain);
+                    lfoGain.connect(osc.frequency);
+                    osc.connect(gainNode);
+                    
+                    gainNode.gain.setValueAtTime(0.25, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                    
                     osc.start(now);
-                    osc.stop(now + duration);
-                    if (osc2) {
-                        osc2.start(now);
-                        osc2.stop(now + duration);
-                    }
-                } catch(e) {
-                    console.log('Sound play failed');
-                }
-            }
-
-            playNoise(duration, filterFreq) {
-                if (!this.ctx || !this.initialized || !this.enabled) return;
-                try {
-                    const now = this.ctx.currentTime;
-                    const bufferSize = this.ctx.sampleRate * duration;
-                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-                    const data = buffer.getChannelData(0);
-
-                    for (let i = 0; i < bufferSize; i++) {
-                        data[i] = Math.random() * 2 - 1;
-                    }
-
-                    const noise = this.ctx.createBufferSource();
-                    noise.buffer = buffer;
-
-                    const filter = this.ctx.createBiquadFilter();
-                    filter.type = 'lowpass';
-                    filter.frequency.setValueAtTime(filterFreq || 500, now);
-
-                    const gain = this.ctx.createGain();
-                    gain.gain.setValueAtTime(0.5, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
-
-                    noise.connect(filter);
-                    filter.connect(gain);
-                    gain.connect(this.masterGain);
-
-                    noise.start(now);
-                    noise.stop(now + duration);
+                    lfo.start(now);
+                    osc.stop(now + 0.5);
+                    lfo.stop(now + 0.5);
                 } catch(e) {}
             }
 
-            playShoot() {
-                this.playAdvancedTone({
-                    freq: 800,
-                    type: 'square',
-                    duration: 0.15,
-                    attack: 0.001,
-                    decay: 0.02,
-                    sustain: 0.3,
-                    release: 0.1,
-                    filterFreq: 1200,
-                    harmonic: 2,
-                    harmonicType: 'sawtooth',
-                    harmonicDetune: -10
-                });
+            // HACKER-1: Tremolo Wave
+            playTremoloWave() {
+                if (!this.ctx || !this.initialized || !this.enabled) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const gainNode = this.ctx.createGain();
+                    gainNode.connect(this.masterGain);
+                    
+                    const osc = this.ctx.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.connect(gainNode);
+                    
+                    const lfo = this.ctx.createOscillator();
+                    lfo.frequency.setValueAtTime(15, now);
+                    const lfoGain = this.ctx.createGain();
+                    lfoGain.gain.setValueAtTime(0.15, now);
+                    
+                    lfo.connect(lfoGain);
+                    lfoGain.connect(gainNode.gain);
+                    
+                    gainNode.gain.setValueAtTime(0.2, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+                    
+                    osc.start(now);
+                    lfo.start(now);
+                    osc.stop(now + 0.6);
+                    lfo.stop(now + 0.6);
+                } catch(e) {}
             }
 
-            playSniper() {
-                this.playAdvancedTone({
-                    freq: 1800,
-                    type: 'triangle',
-                    duration: 0.35,
-                    attack: 0.001,
-                    decay: 0.15,
-                    sustain: 0.2,
-                    release: 0.15,
-                    filterFreq: 3000,
-                    harmonic: 0.5,
-                    harmonicType: 'sine'
-                });
+            // HACKER-2: Underwater Echo
+            playUnderwaterEcho() {
+                if (!this.ctx || !this.initialized || !this.enabled) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const gainNode = this.ctx.createGain();
+                    gainNode.connect(this.masterGain);
+                    
+                    const osc = this.ctx.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(120, now);
+                    osc.frequency.linearRampToValueAtTime(90, now + 0.6);
+                    
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(800, now);
+                    filter.Q.setValueAtTime(5, now);
+                    
+                    const lfo = this.ctx.createOscillator();
+                    lfo.frequency.setValueAtTime(4, now);
+                    const lfoGain = this.ctx.createGain();
+                    lfoGain.gain.setValueAtTime(200, now);
+                    
+                    lfo.connect(lfoGain);
+                    lfoGain.connect(filter.frequency);
+                    osc.connect(filter);
+                    filter.connect(gainNode);
+                    
+                    gainNode.gain.setValueAtTime(0.25, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+                    
+                    osc.start(now);
+                    lfo.start(now);
+                    osc.stop(now + 0.6);
+                    lfo.stop(now + 0.6);
+                } catch(e) {}
             }
 
-            playBoom() {
-                this.playNoise(0.6, 300);
-                this.playAdvancedTone({
-                    freq: 80,
-                    type: 'sawtooth',
-                    duration: 0.5,
-                    attack: 0.001,
-                    decay: 0.1,
-                    sustain: 0.3,
-                    release: 0.3,
-                    filterFreq: 400
-                });
-            }
-
+            // BUILD: Deep Pulse
             playBuild() {
-                this.playAdvancedTone({
-                    freq: 400,
-                    type: 'sine',
-                    duration: 0.25,
-                    attack: 0.01,
-                    decay: 0.05,
-                    sustain: 0.6,
-                    release: 0.1,
-                    filterFreq: 2000,
-                    harmonic: 2,
-                    detune: 5
-                });
+                if (!this.ctx || !this.initialized || !this.enabled) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const gainNode = this.ctx.createGain();
+                    gainNode.connect(this.masterGain);
+                    
+                    const osc = this.ctx.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(60, now);
+                    osc.frequency.linearRampToValueAtTime(30, now + 0.4);
+                    
+                    const lfo = this.ctx.createOscillator();
+                    lfo.frequency.setValueAtTime(3, now);
+                    const lfoGain = this.ctx.createGain();
+                    lfoGain.gain.setValueAtTime(15, now);
+                    
+                    lfo.connect(lfoGain);
+                    lfoGain.connect(osc.frequency);
+                    osc.connect(gainNode);
+                    
+                    gainNode.gain.setValueAtTime(0.3, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                    
+                    osc.start(now);
+                    lfo.start(now);
+                    osc.stop(now + 0.4);
+                    lfo.stop(now + 0.4);
+                } catch(e) {}
             }
 
-            playError() {
-                this.playAdvancedTone({
-                    freq: 150,
-                    type: 'sawtooth',
-                    duration: 0.25,
-                    attack: 0.001,
-                    decay: 0.05,
-                    sustain: 0.5,
-                    release: 0.15,
-                    filterFreq: 600
-                });
-            }
-
+            // UPGRADE: Rising Swell
             playUpgrade() {
-                this.playAdvancedTone({
-                    freq: 600,
-                    type: 'sine',
-                    duration: 0.4,
-                    attack: 0.02,
-                    decay: 0.1,
-                    sustain: 0.7,
-                    release: 0.2,
-                    filterFreq: 3000,
-                    harmonic: 3,
-                    harmonicType: 'triangle',
-                    detune: 10
-                });
+                if (!this.ctx || !this.initialized || !this.enabled) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const gainNode = this.ctx.createGain();
+                    gainNode.connect(this.masterGain);
+                    
+                    const osc = this.ctx.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(80, now);
+                    osc.frequency.exponentialRampToValueAtTime(300, now + 0.7);
+                    
+                    const lfo = this.ctx.createOscillator();
+                    lfo.frequency.setValueAtTime(6, now);
+                    const lfoGain = this.ctx.createGain();
+                    lfoGain.gain.setValueAtTime(25, now);
+                    
+                    lfo.connect(lfoGain);
+                    lfoGain.connect(osc.frequency);
+                    osc.connect(gainNode);
+                    
+                    gainNode.gain.setValueAtTime(0.1, now);
+                    gainNode.gain.linearRampToValueAtTime(0.3, now + 0.5);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.7);
+                    
+                    osc.start(now);
+                    lfo.start(now);
+                    osc.stop(now + 0.7);
+                    lfo.stop(now + 0.7);
+                } catch(e) {}
             }
 
-            playPop() {
-                this.playAdvancedTone({
-                    freq: 500,
-                    type: 'sine',
-                    duration: 0.12,
-                    attack: 0.001,
-                    decay: 0.03,
-                    sustain: 0.2,
-                    release: 0.05,
-                    filterFreq: 1500
-                });
+            // ERROR: Wobble Bass
+            playError() {
+                if (!this.ctx || !this.initialized || !this.enabled) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const gainNode = this.ctx.createGain();
+                    gainNode.connect(this.masterGain);
+                    
+                    const osc = this.ctx.createOscillator();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(80, now);
+                    
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(200, now);
+                    filter.Q.setValueAtTime(10, now);
+                    
+                    const lfo = this.ctx.createOscillator();
+                    lfo.frequency.setValueAtTime(6, now);
+                    const lfoGain = this.ctx.createGain();
+                    lfoGain.gain.setValueAtTime(800, now);
+                    
+                    lfo.connect(lfoGain);
+                    lfoGain.connect(filter.frequency);
+                    osc.connect(filter);
+                    filter.connect(gainNode);
+                    
+                    gainNode.gain.setValueAtTime(0.3, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                    
+                    osc.start(now);
+                    lfo.start(now);
+                    osc.stop(now + 0.4);
+                    lfo.stop(now + 0.4);
+                } catch(e) {}
             }
 
+            // ENEMY DEATH: Resonant Ring (short version for enemies)
+            playResonantRing() {
+                if (!this.ctx || !this.initialized || !this.enabled) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const gainNode = this.ctx.createGain();
+                    gainNode.connect(this.masterGain);
+                    
+                    const osc = this.ctx.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.exponentialRampToValueAtTime(200, now + 0.5);
+                    
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'bandpass';
+                    filter.frequency.setValueAtTime(400, now);
+                    filter.Q.setValueAtTime(20, now);
+                    
+                    const lfo = this.ctx.createOscillator();
+                    lfo.frequency.setValueAtTime(7, now);
+                    const lfoGain = this.ctx.createGain();
+                    lfoGain.gain.setValueAtTime(100, now);
+                    
+                    lfo.connect(lfoGain);
+                    lfoGain.connect(filter.frequency);
+                    osc.connect(filter);
+                    filter.connect(gainNode);
+                    
+                    gainNode.gain.setValueAtTime(0.25, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                    
+                    osc.start(now);
+                    lfo.start(now);
+                    osc.stop(now + 0.5);
+                    lfo.stop(now + 0.5);
+                } catch(e) {}
+            }
+
+            // CORE HIT: Phase Shift
             playCoreHit() {
-                this.playNoise(0.3, 200);
-                this.playAdvancedTone({
-                    freq: 60,
-                    type: 'sawtooth',
-                    duration: 0.8,
-                    attack: 0.001,
-                    decay: 0.2,
-                    sustain: 0.4,
-                    release: 0.3,
-                    filterFreq: 300
-                });
+                if (!this.ctx || !this.initialized || !this.enabled) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const gainNode = this.ctx.createGain();
+                    gainNode.connect(this.masterGain);
+                    
+                    const osc1 = this.ctx.createOscillator();
+                    const osc2 = this.ctx.createOscillator();
+                    osc1.type = 'sine';
+                    osc2.type = 'sine';
+                    osc1.frequency.setValueAtTime(150, now);
+                    osc2.frequency.setValueAtTime(150.5, now);
+                    
+                    const lfo = this.ctx.createOscillator();
+                    lfo.frequency.setValueAtTime(0.5, now);
+                    const lfoGain = this.ctx.createGain();
+                    lfoGain.gain.setValueAtTime(5, now);
+                    
+                    lfo.connect(lfoGain);
+                    lfoGain.connect(osc2.frequency);
+                    
+                    osc1.connect(gainNode);
+                    osc2.connect(gainNode);
+                    
+                    gainNode.gain.setValueAtTime(0.3, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+                    
+                    osc1.start(now);
+                    osc2.start(now);
+                    lfo.start(now);
+                    osc1.stop(now + 0.6);
+                    osc2.stop(now + 0.6);
+                    lfo.stop(now + 0.6);
+                } catch(e) {}
             }
 
+            // CORE DESTROY: Resonant Ring (long version)
             playCoreDestroy() {
-                this.playNoise(1.5, 100);
-                this.playAdvancedTone({
-                    freq: 40,
-                    type: 'sawtooth',
-                    duration: 2.0,
-                    attack: 0.01,
-                    decay: 0.5,
-                    sustain: 0.3,
-                    release: 1.0,
-                    filterFreq: 200
-                });
+                if (!this.ctx || !this.initialized || !this.enabled) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const gainNode = this.ctx.createGain();
+                    gainNode.connect(this.masterGain);
+                    
+                    const osc = this.ctx.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.exponentialRampToValueAtTime(100, now + 1.5);
+                    
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'bandpass';
+                    filter.frequency.setValueAtTime(400, now);
+                    filter.Q.setValueAtTime(20, now);
+                    
+                    const lfo = this.ctx.createOscillator();
+                    lfo.frequency.setValueAtTime(7, now);
+                    const lfoGain = this.ctx.createGain();
+                    lfoGain.gain.setValueAtTime(100, now);
+                    
+                    lfo.connect(lfoGain);
+                    lfoGain.connect(filter.frequency);
+                    osc.connect(filter);
+                    filter.connect(gainNode);
+                    
+                    gainNode.gain.setValueAtTime(0.4, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 1.5);
+                    
+                    osc.start(now);
+                    lfo.start(now);
+                    osc.stop(now + 1.5);
+                    lfo.stop(now + 1.5);
+                } catch(e) {}
             }
 
+            // PHASE: Phase Shift (shorter version)
             playPhase() {
-                this.playAdvancedTone({
-                    freq: 300,
-                    type: 'sine',
-                    duration: 0.3,
-                    attack: 0.05,
-                    decay: 0.1,
-                    sustain: 0.5,
-                    release: 0.1,
-                    filterFreq: 1500,
-                    harmonic: 1.5,
-                    detune: 20
-                });
+                if (!this.ctx || !this.initialized || !this.enabled) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const gainNode = this.ctx.createGain();
+                    gainNode.connect(this.masterGain);
+                    
+                    const osc1 = this.ctx.createOscillator();
+                    const osc2 = this.ctx.createOscillator();
+                    osc1.type = 'sine';
+                    osc2.type = 'sine';
+                    osc1.frequency.setValueAtTime(200, now);
+                    osc2.frequency.setValueAtTime(200.8, now);
+                    
+                    osc1.connect(gainNode);
+                    osc2.connect(gainNode);
+                    
+                    gainNode.gain.setValueAtTime(0.2, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    
+                    osc1.start(now);
+                    osc2.start(now);
+                    osc1.stop(now + 0.3);
+                    osc2.stop(now + 0.3);
+                } catch(e) {}
             }
 
+            // HEAL: Harmonic Pulse (variation)
             playHeal() {
-                this.playAdvancedTone({
-                    freq: 800,
-                    type: 'sine',
-                    duration: 0.5,
-                    attack: 0.1,
-                    decay: 0.1,
-                    sustain: 0.7,
-                    release: 0.2,
-                    filterFreq: 2500,
-                    harmonic: 2,
-                    harmonicType: 'triangle'
-                });
+                if (!this.ctx || !this.initialized || !this.enabled) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const gainNode = this.ctx.createGain();
+                    gainNode.connect(this.masterGain);
+                    
+                    const fundamentalFreq = 200;
+                    const harmonics = [1, 1.5, 2];
+                    
+                    harmonics.forEach((harmonic, i) => {
+                        const osc = this.ctx.createOscillator();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(fundamentalFreq * harmonic, now);
+                        
+                        const oscGain = this.ctx.createGain();
+                        oscGain.gain.setValueAtTime(0.3 / harmonic, now);
+                        
+                        osc.connect(oscGain);
+                        oscGain.connect(gainNode);
+                        
+                        osc.start(now);
+                        osc.stop(now + 0.5);
+                    });
+                    
+                    gainNode.gain.setValueAtTime(0.25, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                } catch(e) {}
             }
         }
+        
         const sfx = new SfxEngine();
 
         // Sound toggle function
@@ -1768,24 +1836,15 @@
                 
                 // NATRON LOGIK
                 if (this.isNatron && towerType !== undefined) {
-                    // Initialisiere damage tracking für diesen tower type
                     if (!this.damageByType[towerType]) {
                         this.damageByType[towerType] = 0;
                     }
                     
-                    // Berechne maximalen Schaden für diesen Typ (35% des Max HP)
                     const maxDamageFromType = this.maxHp * 0.35;
-                    
-                    // Wieviel Schaden kann dieser Typ noch verursachen?
                     const remainingAllowedDamage = maxDamageFromType - this.damageByType[towerType];
-                    
-                    // Limitiere den Schaden
                     const actualDamage = Math.min(dmg, remainingAllowedDamage);
                     
-                    // Tracke den Schaden
                     this.damageByType[towerType] += actualDamage;
-                    
-                    // Wende den limitierten Schaden an
                     this.hp -= actualDamage;
                 } else {
                     this.hp -= dmg;
@@ -1809,7 +1868,7 @@
                         newEnemy.pathIndex = this.pathIndex;
                         newEnemy.canSplit = false;
                         entities.enemies.push(newEnemy);
-                        sfx.playPop();
+                        sfx.playResonantRing();
                     }, 100);
                 }
 
@@ -1817,7 +1876,7 @@
                     this.dead = true;
                     
                     if (this.isBalloon && this.balloonSize > 1) {
-                        sfx.playPop();
+                        sfx.playResonantRing();
                         setTimeout(() => {
                             for (let i = 0; i < 2; i++) {
                                 const newBalloon = new Enemy('NORMAL', true, this.balloonSize - 1);
@@ -1828,7 +1887,7 @@
                             }
                         }, 100);
                     } else {
-                        sfx.playBoom();
+                        sfx.playResonantRing();
                     }
                     
                     const moneyGain = this.isBalloon ? 5 * this.balloonSize : (this.type === 'BOSS' ? 100 : this.reward);
@@ -1855,7 +1914,7 @@
             }
         }
 
-        // --- HACKER TOWER CLASS (NEUE OPTIK) ---
+        // --- HACKER TOWER CLASS ---
         class Tower {
             constructor(x, z, typeIndex) {
                 this.typeIndex = typeIndex;
@@ -1983,8 +2042,10 @@
             }
 
             shoot(target) {
-                if(this.typeData.name === 'HACKER-1') sfx.playSniper();
-                else sfx.playShoot();
+                // UNTERSCHIEDLICHE SOUNDS FÜR JEDEN HACKER-TYP
+                if(this.typeIndex === 0) sfx.playSonicWave();
+                else if(this.typeIndex === 1) sfx.playTremoloWave();
+                else if(this.typeIndex === 2) sfx.playUnderwaterEcho();
 
                 // Flash effect
                 if (this.light) {
@@ -2055,7 +2116,7 @@
                 
                 if (this.data.aoe) {
                     spawnParticles(this.mesh.position, this.data.color, 20);
-                    sfx.playBoom();
+                    sfx.playResonantRing();
                     entities.enemies.forEach(e => {
                         if (e.mesh.position.distanceTo(this.mesh.position) < this.data.aoe) {
                             e.takeDamage(this.data.damage, this.towerType);
