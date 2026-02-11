@@ -8,13 +8,11 @@
 
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Orbitron', sans-serif; user-select: none; }
         
-        /* UI OVERLAY */
         #ui-layer {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;
             display: flex; flex-direction: column; justify-content: space-between;
         }
 
-        /* HUD STYLES */
         .hud-top {
             display: flex; justify-content: space-between; padding: 20px;
             background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
@@ -32,7 +30,6 @@
         #lives-display { color: #0ff; border-color: #0ff; }
         #wave-display { color: #ff0; border-color: #ff0; }
 
-        /* GAME CONTROLS */
         .game-controls {
             position: absolute; top: 120px; right: 20px;
             display: flex; flex-direction: column; gap: 10px; pointer-events: auto;
@@ -47,7 +44,6 @@
         .control-btn.pause { border-color: #ff0; color: #ff0; }
         .control-btn.pause:hover { background: #ff0; }
 
-        /* LIGHT CONTROLS */
         .light-panel {
             position: absolute; top: 80px; left: 20px; pointer-events: auto;
             background: rgba(0,0,0,0.9); padding: 15px; border-radius: 10px;
@@ -65,7 +61,6 @@
         .toggle-btn.active { background: #0f0; color: #000; border-color: #0f0; }
         .toggle-btn:hover { border-color: #0ff; }
 
-        /* BUILD MENU */
         #build-menu {
             pointer-events: auto;
             position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
@@ -88,7 +83,6 @@
         .delete-mode { border-color: #f00 !important; background: #220000 !important; }
         .delete-mode:hover { box-shadow: 0 0 10px #f00 !important; }
 
-        /* TOWER INFO PANEL */
         .tower-info-panel {
             position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%);
             background: rgba(0,0,0,0.9); padding: 15px; border-radius: 10px;
@@ -112,7 +106,6 @@
         }
         .sell-btn:hover { box-shadow: 0 0 20px #f00; }
 
-        /* MENUS */
         .overlay-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85);
@@ -158,7 +151,22 @@
         .level-card.sandbox { border-color: #0f0; color: #0f0; }
         .level-card.sandbox:hover { box-shadow: 0 0 20px #0f0; }
 
-        /* HIGHSCORE */
+        .sandbox-controls {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 20px; width: 80%; max-width: 800px;
+            background: rgba(0,0,0,0.7); padding: 30px; border-radius: 10px;
+        }
+        .sandbox-section {
+            background: rgba(0,40,0,0.3); padding: 15px; border-radius: 8px;
+            border: 1px solid #0f0;
+        }
+        .sandbox-section h4 { color: #0f0; margin: 0 0 10px 0; }
+        .sandbox-label { color: #0ff; font-size: 12px; margin: 10px 0 5px 0; }
+        .sandbox-input {
+            width: 100%; padding: 8px; background: #111; border: 1px solid #0f0;
+            color: #0ff; font-family: 'Orbitron'; border-radius: 4px;
+        }
+
         .highscore-panel {
             background: rgba(20,20,20,0.9); padding: 20px; border-radius: 10px;
             border: 1px solid #ff0; margin-top: 20px; max-width: 400px;
@@ -175,7 +183,6 @@
             text-shadow: 0 0 20px #fff; opacity: 0; transition: opacity 0.5s;
         }
 
-        /* PAUSE SCREEN */
         .pause-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.7); backdrop-filter: blur(10px);
@@ -211,13 +218,11 @@
             </div>
         </div>
 
-        <!-- GAME CONTROLS -->
         <div class="game-controls" style="display:none;" id="game-controls">
             <button class="control-btn pause" onclick="togglePause()">⏸️ PAUSE</button>
             <button class="control-btn" onclick="showMenu()">📋 MENU</button>
         </div>
 
-        <!-- LIGHT PANEL -->
         <div class="light-panel" style="display:none;" id="light-panel">
             <h4>⚙️ SETTINGS</h4>
             
@@ -238,7 +243,6 @@
 
         <div id="msg-area">WAVE COMPLETE</div>
 
-        <!-- BUILD MENU -->
         <div id="build-menu" style="display:none;">
             <div class="tower-btn selected" data-type="0" onclick="selectTower(0)">
                 <div class="tower-name">HACKER-0</div>
@@ -262,7 +266,6 @@
             </div>
         </div>
 
-        <!-- TOWER INFO -->
         <div class="tower-info-panel" id="tower-info-panel">
             <h3 id="tower-info-name">Hacker</h3>
             <div class="tower-stat" id="tower-info-level">Level: 1</div>
@@ -274,7 +277,6 @@
         </div>
     </div>
 
-    <!-- PAUSE OVERLAY -->
     <div class="pause-overlay" id="pause-overlay">
         <div style="text-align: center;">
             <h1 style="-webkit-text-fill-color: #ff0;">⏸️ PAUSED</h1>
@@ -284,7 +286,6 @@
         </div>
     </div>
 
-    <!-- START SCREEN -->
     <div id="start-screen" class="overlay-screen">
         <h1>NEON DEFENSE</h1>
         <h2>PROTECT THE NEURO-CORE</h2>
@@ -302,16 +303,62 @@
         </div>
     </div>
 
-    <!-- SANDBOX SETUP -->
     <div id="sandbox-setup-screen" class="overlay-screen" style="display:none;">
-        <h1 style="-webkit-text-fill-color: #0f0;">SANDBOX MODE</h1>
-        <div style="text-align:center; padding:20px;">
-            <p style="color:#888;">Sandbox setup interface...</p>
+        <h1 style="-webkit-text-fill-color: #0f0;">🛠️ SANDBOX MODE</h1>
+        <h2>Customize Your Challenge</h2>
+        
+        <div class="sandbox-controls">
+            <div class="sandbox-section">
+                <h4>💰 Economy</h4>
+                <div class="sandbox-label">Starting Credits</div>
+                <input type="number" class="sandbox-input" id="sandbox-money" value="1000" min="0" max="10000" step="100">
+                
+                <div class="sandbox-label">Difficulty Scale</div>
+                <input type="range" class="sandbox-input" id="sandbox-difficulty" min="10" max="300" value="100">
+                <span style="color:#0ff;" id="sandbox-difficulty-val">1.0x</span>
+            </div>
+
+            <div class="sandbox-section">
+                <h4>👾 Enemies</h4>
+                <div class="sandbox-label">Enemies Per Wave</div>
+                <input type="number" class="sandbox-input" id="sandbox-enemy-count" value="10" min="1" max="50">
+                
+                <div class="sandbox-label">Boss Wave Interval</div>
+                <input type="number" class="sandbox-input" id="sandbox-boss-interval" value="5" min="1" max="20">
+                
+                <div class="sandbox-label">Max Waves (0 = ∞)</div>
+                <input type="number" class="sandbox-input" id="sandbox-max-waves" value="0" min="0" max="100">
+            </div>
+
+            <div class="sandbox-section">
+                <h4>🎨 Theme Color</h4>
+                <div class="sandbox-label">Hue</div>
+                <input type="range" class="sandbox-input" id="sandbox-hue" min="0" max="360" value="120">
+                <div style="width:100%; height:30px; border-radius:5px; margin-top:10px;" id="sandbox-color-preview"></div>
+            </div>
+
+            <div class="sandbox-section">
+                <h4>⚔️ Enemy Mix</h4>
+                <div class="sandbox-label">Normal %</div>
+                <input type="range" class="sandbox-input" id="sandbox-normal" min="0" max="100" value="50">
+                <span style="color:#0ff;" id="sandbox-normal-val">50%</span>
+                
+                <div class="sandbox-label">Speed %</div>
+                <input type="range" class="sandbox-input" id="sandbox-speed" min="0" max="100" value="30">
+                <span style="color:#0ff;" id="sandbox-speed-val">30%</span>
+                
+                <div class="sandbox-label">Tank %</div>
+                <input type="range" class="sandbox-input" id="sandbox-tank" min="0" max="100" value="20">
+                <span style="color:#0ff;" id="sandbox-tank-val">20%</span>
+            </div>
+        </div>
+
+        <div style="margin-top: 30px;">
+            <button class="btn-main" onclick="startSandboxGame()">🚀 START SANDBOX</button>
             <button class="btn-main" onclick="closeSandbox()">BACK</button>
         </div>
     </div>
 
-    <!-- GAME OVER -->
     <div id="game-over-screen" class="overlay-screen" style="display:none;">
         <h1 style="color:red; -webkit-text-fill-color: red;">AI TAKEOVER COMPLETE</h1>
         <h2 id="final-score">The Neuro-Core has been compromised</h2>
@@ -319,7 +366,6 @@
         <button class="btn-main" onclick="showMenu()">MAIN MENU</button>
     </div>
 
-    <!-- VICTORY -->
     <div id="victory-screen" class="overlay-screen" style="display:none;">
         <h1 style="color:#0f0; -webkit-text-fill-color: #0f0;">CORE SECURED</h1>
         <h2 id="victory-msg">Next Level Unlocked</h2>
@@ -355,7 +401,6 @@
                 }
             }
 
-            // HACKER-0: Sonic Wave
             playSonicWave() {
                 if (!this.ctx || !this.initialized || !this.enabled) return;
                 try {
@@ -387,7 +432,6 @@
                 } catch(e) {}
             }
 
-            // HACKER-1: Tremolo Wave
             playTremoloWave() {
                 if (!this.ctx || !this.initialized || !this.enabled) return;
                 try {
@@ -418,7 +462,6 @@
                 } catch(e) {}
             }
 
-            // HACKER-2: Underwater Echo
             playUnderwaterEcho() {
                 if (!this.ctx || !this.initialized || !this.enabled) return;
                 try {
@@ -456,7 +499,6 @@
                 } catch(e) {}
             }
 
-            // BUILD: Deep Pulse
             playBuild() {
                 if (!this.ctx || !this.initialized || !this.enabled) return;
                 try {
@@ -488,7 +530,6 @@
                 } catch(e) {}
             }
 
-            // UPGRADE: Rising Swell
             playUpgrade() {
                 if (!this.ctx || !this.initialized || !this.enabled) return;
                 try {
@@ -521,7 +562,6 @@
                 } catch(e) {}
             }
 
-            // ERROR: Wobble Bass
             playError() {
                 if (!this.ctx || !this.initialized || !this.enabled) return;
                 try {
@@ -558,7 +598,6 @@
                 } catch(e) {}
             }
 
-            // ENEMY DEATH: Resonant Ring (short version for enemies)
             playResonantRing() {
                 if (!this.ctx || !this.initialized || !this.enabled) return;
                 try {
@@ -596,7 +635,6 @@
                 } catch(e) {}
             }
 
-            // CORE HIT: Phase Shift
             playCoreHit() {
                 if (!this.ctx || !this.initialized || !this.enabled) return;
                 try {
@@ -634,7 +672,6 @@
                 } catch(e) {}
             }
 
-            // CORE DESTROY: Resonant Ring (long version)
             playCoreDestroy() {
                 if (!this.ctx || !this.initialized || !this.enabled) return;
                 try {
@@ -672,7 +709,6 @@
                 } catch(e) {}
             }
 
-            // PHASE: Phase Shift (shorter version)
             playPhase() {
                 if (!this.ctx || !this.initialized || !this.enabled) return;
                 try {
@@ -700,7 +736,6 @@
                 } catch(e) {}
             }
 
-            // HEAL: Harmonic Pulse (variation)
             playHeal() {
                 if (!this.ctx || !this.initialized || !this.enabled) return;
                 try {
@@ -734,7 +769,6 @@
         
         const sfx = new SfxEngine();
 
-        // Sound toggle function
         window.toggleSound = function() {
             sfx.enabled = !sfx.enabled;
             const btn = document.getElementById('sound-toggle');
@@ -747,7 +781,6 @@
             }
         }
 
-        // --- BACKGROUND MUSIC ---
         let bgMusic = null;
         function loadBackgroundMusic() {
             if (!sfx.enabled) return;
@@ -764,7 +797,6 @@
             }
         }
 
-        // --- TEXTURE GENERATOR FOR BITS ---
         function createCharTexture(char, color) {
             const canvas = document.createElement('canvas');
             canvas.width = 64; canvas.height = 64;
@@ -781,7 +813,6 @@
 
         let texZero, texOne, texHex;
 
-        // --- CONFIG & STATE ---
         const TILE_SIZE = 4;
         let scene, camera, renderer, controls, raycaster, mouse;
         let pathBuilder = null;
@@ -792,6 +823,7 @@
         let neuroCore = null;
         let portalGateway = null;
         let gameSpeed = 1.0;
+        let matrixSkyDome = null;
         
         let gameState = {
             money: 400,
@@ -813,7 +845,6 @@
             }
         };
 
-        // Tower Types - GAMEPLAY BLEIBT GLEICH
         const TOWER_TYPES = [
             { 
                 name: "HACKER-0", 
@@ -847,7 +878,6 @@
             }
         ];
 
-        // Levels
         const LEVELS = [
             {
                 color: new THREE.Color(0.0, 1.0, 1.0),
@@ -869,11 +899,10 @@
             {
                 isSandbox: true,
                 color: new THREE.Color(0.0, 1.0, 0.5),
-                path: []
+                path: [{x:-8,z:-8}, {x:-8,z:-2}, {x:0,z:-2}, {x:0,z:2}, {x:8,z:2}, {x:8,z:8}]
             }
         ];
 
-        // Entities
         const entities = {
             towers: [],
             enemies: [],
@@ -884,11 +913,11 @@
 
         const shake = { amount: 0 };
 
-        // --- SHADER BACKGROUND ---
         const bgUniforms = {
             uTime: { value: 0 },
             uColor: { value: new THREE.Vector3(0,1,1) }
         };
+        
         const bgMaterial = new THREE.ShaderMaterial({
             uniforms: bgUniforms,
             vertexShader: `
@@ -920,7 +949,141 @@
             depthWrite: false
         });
 
-        // --- PORTAL GATEWAY CLASS ---
+        // DARK MYSTICAL SKY
+        function createMatrixSkyDome() {
+            console.log('Creating Dark Mystical Sky...');
+            const skyGeo = new THREE.SphereGeometry(100, 64, 64);
+            const skyUniforms = { uTime: { value: 0 } };
+            
+            const vertexShader = `
+                varying vec3 vPosition;
+                varying vec2 vUv;
+                void main() {
+                    vPosition = position;
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `;
+            
+            const fragmentShader = `
+                precision highp float;
+                varying vec3 vPosition;
+                varying vec2 vUv;
+                uniform float uTime;
+
+                float hash(vec2 p) {
+                    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+                }
+
+                float matrixRain(vec2 uv, float time) {
+                    float col = floor(uv.x * 40.0);
+                    float speed = hash(vec2(col, 0.0)) * 1.5 + 0.5;
+                    float y = fract(uv.y * 12.0 - time * speed);
+                    float bright = smoothstep(0.08, 0.0, y) * smoothstep(0.0, 0.15, y);
+                    float charRandom = hash(vec2(col, floor(uv.y * 12.0 - time * speed)));
+                    return charRandom > 0.7 ? bright : 0.0;
+                }
+
+                vec2 voronoiHash(vec2 p) {
+                    p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
+                    return fract(sin(p) * 43758.5453);
+                }
+
+                float voronoi(vec2 uv, float time) {
+                    vec2 i = floor(uv);
+                    vec2 f = fract(uv);
+                    float minDist = 1.0;
+                    
+                    for(int y = -1; y <= 1; y++) {
+                        for(int x = -1; x <= 1; x++) {
+                            vec2 neighbor = vec2(float(x), float(y));
+                            vec2 point = voronoiHash(i + neighbor);
+                            point = 0.5 + 0.5 * sin(time * 0.3 + 6.28 * point);
+                            minDist = min(minDist, length(neighbor + point - f));
+                        }
+                    }
+                    return minDist;
+                }
+
+                void main() {
+                    vec3 pos = normalize(vPosition);
+                    
+                    float theta = atan(pos.z, pos.x);
+                    float phi = acos(pos.y);
+                    vec2 uv = vec2(theta / 6.28318, phi / 3.14159);
+                    
+                    vec3 baseColor = vec3(0.0, 0.01, 0.03);
+                    
+                    float depthGradient = pow(uv.y, 2.0);
+                    baseColor += vec3(0.0, 0.02, 0.05) * (1.0 - depthGradient);
+                    
+                    float rain = matrixRain(uv, uTime * 0.2);
+                    rain += matrixRain(uv * 1.3 + 0.2, uTime * 0.3) * 0.4;
+                    vec3 rainColor = vec3(0.0, 0.3, 0.1) * rain;
+                    
+                    float cells = voronoi(uv * 8.0, uTime * 0.15);
+                    cells = pow(1.0 - cells, 3.0);
+                    vec3 cellColor = vec3(0.0, 0.1, 0.15) * cells * 0.15;
+                    
+                    float ringAngle = theta + uTime * 0.3;
+                    float rings = (sin(phi * 30.0 + ringAngle * 3.0) * 0.5 + 0.5);
+                    rings = pow(rings, 15.0);
+                    vec3 ringColor = vec3(0.15, 0.0, 0.2) * rings;
+                    
+                    vec2 starUV = uv * 25.0;
+                    vec2 starId = floor(starUV);
+                    float starHash = hash(starId);
+                    float star = 0.0;
+                    if(starHash > 0.95 && uv.y > 0.4) {
+                        vec2 starPos = fract(starUV) - 0.5;
+                        star = smoothstep(0.03, 0.0, length(starPos));
+                        star *= (sin(uTime * 1.5 + starHash * 6.28) * 0.4 + 0.6);
+                    }
+                    vec3 starColor = vec3(0.4, 0.4, 0.5) * star;
+                    
+                    float horizon = smoothstep(0.53, 0.47, uv.y) * smoothstep(0.35, 0.47, uv.y);
+                    vec3 horizonColor = vec3(0.0, 0.15, 0.2) * horizon * 0.3;
+                    
+                    float pulse = (sin(uTime * 0.5) * 0.5 + 0.5);
+                    pulse = pow(pulse, 4.0);
+                    vec3 pulseColor = vec3(0.05, 0.0, 0.1) * pulse * 0.2;
+                    
+                    vec3 finalColor = baseColor;
+                    finalColor += rainColor;
+                    finalColor += cellColor;
+                    finalColor += ringColor;
+                    finalColor += starColor;
+                    finalColor += horizonColor;
+                    finalColor += pulseColor;
+                    
+                    finalColor *= (0.95 + sin(uTime * 0.8) * 0.05);
+                    
+                    float vignette = 1.0 - length(vec2(uv.x - 0.5, uv.y - 0.5) * 0.5) * 0.3;
+                    finalColor *= vignette;
+                    
+                    gl_FragColor = vec4(finalColor, 1.0);
+                }
+            `;
+            
+            const skyMat = new THREE.ShaderMaterial({
+                uniforms: skyUniforms,
+                vertexShader: vertexShader,
+                fragmentShader: fragmentShader,
+                side: THREE.BackSide,
+                fog: false,
+                depthWrite: false,
+                depthTest: false
+            });
+            
+            const skyMesh = new THREE.Mesh(skyGeo, skyMat);
+            skyMesh.position.set(0, 0, 0);
+            skyMesh.renderOrder = -100;
+            skyMesh.userData.uniforms = skyUniforms;
+            
+            console.log('Dark Mystical Sky created!');
+            return skyMesh;
+        }
+
         class PortalGateway {
             constructor(x, z) {
                 this.group = new THREE.Group();
@@ -1040,7 +1203,6 @@
             }
         }
 
-        // --- NEURO-CORE CLASS ---
         class NeuroCore {
             constructor(x, z) {
                 this.group = new THREE.Group();
@@ -1203,7 +1365,6 @@
             }
         }
 
-        // --- CHARACTER BUILDER FUNCTION ---
         function createCharacter(type, scale, color, eyeColor) {
             const charGroup = new THREE.Group();
             
@@ -1305,7 +1466,6 @@
             return charGroup;
         }
 
-        // --- LIGHTING CONTROLS ---
         window.updateLighting = function(type, value) {
             value = parseFloat(value);
             
@@ -1327,7 +1487,6 @@
             document.getElementById('speed-val').innerText = gameSpeed.toFixed(1) + 'x';
         }
 
-        // --- PAUSE SYSTEM ---
         window.togglePause = function() {
             isPaused = !isPaused;
             document.getElementById('pause-overlay').style.display = isPaused ? 'flex' : 'none';
@@ -1380,7 +1539,6 @@
             startGame(gameState.levelIndex);
         }
 
-        // --- TOWER UPGRADE/DELETE ---
         window.toggleDeleteMode = function() {
             deleteMode = !deleteMode;
             const btn = document.querySelectorAll('.tower-btn')[3];
@@ -1474,7 +1632,6 @@
             sfx.playError();
         }
 
-        // --- HIGHSCORE SYSTEM ---
         function saveHighscore() {
             const scores = JSON.parse(localStorage.getItem('highscores') || '[]');
             const levelName = gameState.levelIndex === 4 ? 'Sandbox' : `Level ${gameState.levelIndex + 1}`;
@@ -1512,10 +1669,11 @@
             });
         }
 
-        // Sandbox simplified
+        // SANDBOX FUNCTIONS
         window.openSandbox = function() {
-            sfx.playError();
-            alert('Sandbox mode - simplified for space');
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('sandbox-setup-screen').style.display = 'flex';
+            updateSandboxUI();
         }
 
         window.closeSandbox = function() {
@@ -1523,17 +1681,68 @@
             document.getElementById('start-screen').style.display = 'flex';
         }
 
-        // --- GAME LOGIC ---
+        function updateSandboxUI() {
+            document.getElementById('sandbox-difficulty').oninput = function() {
+                const val = (this.value / 100).toFixed(1);
+                document.getElementById('sandbox-difficulty-val').innerText = val + 'x';
+            };
+            
+            document.getElementById('sandbox-normal').oninput = function() {
+                document.getElementById('sandbox-normal-val').innerText = this.value + '%';
+            };
+            document.getElementById('sandbox-speed').oninput = function() {
+                document.getElementById('sandbox-speed-val').innerText = this.value + '%';
+            };
+            document.getElementById('sandbox-tank').oninput = function() {
+                document.getElementById('sandbox-tank-val').innerText = this.value + '%';
+            };
+            
+            document.getElementById('sandbox-hue').oninput = function() {
+                const hue = this.value;
+                document.getElementById('sandbox-color-preview').style.background = 
+                    `hsl(${hue}, 100%, 50%)`;
+            };
+            document.getElementById('sandbox-color-preview').style.background = 'hsl(120, 100%, 50%)';
+        }
+
+        window.startSandboxGame = function() {
+            gameState.sandboxConfig = {
+                startingMoney: parseInt(document.getElementById('sandbox-money').value),
+                difficultyScale: parseFloat(document.getElementById('sandbox-difficulty').value) / 100,
+                enemyCount: parseInt(document.getElementById('sandbox-enemy-count').value),
+                bossInterval: parseInt(document.getElementById('sandbox-boss-interval').value),
+                maxWaves: parseInt(document.getElementById('sandbox-max-waves').value) || null,
+                enemyMix: {
+                    normal: parseFloat(document.getElementById('sandbox-normal').value) / 100,
+                    speed: parseFloat(document.getElementById('sandbox-speed').value) / 100,
+                    tank: parseFloat(document.getElementById('sandbox-tank').value) / 100
+                },
+                hue: parseInt(document.getElementById('sandbox-hue').value),
+                color: new THREE.Color().setHSL(
+                    parseInt(document.getElementById('sandbox-hue').value) / 360, 
+                    1.0, 
+                    0.5
+                ),
+                customPath: [
+                    {x:-8,z:-8}, {x:-8,z:-2}, {x:0,z:-2}, 
+                    {x:0,z:2}, {x:8,z:2}, {x:8,z:8}
+                ],
+                towerRestrictions: [true, true, true]
+            };
+            
+            startGame(4);
+        }
+
         window.startGame = function(lvlIndex) {
             sfx.init();
             if (sfx.enabled) loadBackgroundMusic();
             
-            // Initialize textures
             texZero = createCharTexture('0', '#00ff41');
             texOne = createCharTexture('1', '#00ff41');
             texHex = createCharTexture('⬡', '#00ffff');
             
             document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('sandbox-setup-screen').style.display = 'none';
 
             gameState.levelIndex = lvlIndex;
             gameState.wave = 1;
@@ -1544,8 +1753,15 @@
 
             const level = LEVELS[lvlIndex];
             
-            gameState.money = 450;
-            gameState.lives = 20;
+            if (level.isSandbox) {
+                gameState.money = gameState.sandboxConfig.startingMoney;
+                gameState.lives = 20;
+                level.color = gameState.sandboxConfig.color;
+                level.path = gameState.sandboxConfig.customPath;
+            } else {
+                gameState.money = 450;
+                gameState.lives = 20;
+            }
 
             const levelColor = level.color;
             bgUniforms.uColor.value.set(levelColor.r, levelColor.g, levelColor.b);
@@ -1635,7 +1851,6 @@
             return false;
         }
 
-        // --- ENEMY CLASS (Mit NATRON) ---
         class Enemy {
             constructor(type, isBalloon = false, balloonSize = 3) {
                 this.type = type;
@@ -1657,9 +1872,8 @@
                 this.healCooldown = 0;
                 this.splits = 0;
                 
-                // NATRON SPEZIAL
                 this.isNatron = false;
-                this.damageByType = {}; // Tracking damage by tower type
+                this.damageByType = {};
 
                 if (isBalloon) {
                     hp = 1;
@@ -1713,7 +1927,6 @@
                         this.splits = 0;
                         this.maxSplits = 2;
                     }
-                    // NEUER GEGNER: NATRON
                     if (type === 'NATRON') {
                         hp *= 4; speed *= 0.7; charScale = 1.1;
                         color = 0xffaa00; eyeColor = 0xff0000;
@@ -1834,7 +2047,6 @@
             takeDamage(dmg, towerType) {
                 if (this.isPhasing) return;
                 
-                // NATRON LOGIK
                 if (this.isNatron && towerType !== undefined) {
                     if (!this.damageByType[towerType]) {
                         this.damageByType[towerType] = 0;
@@ -1914,7 +2126,6 @@
             }
         }
 
-        // --- HACKER TOWER CLASS ---
         class Tower {
             constructor(x, z, typeIndex) {
                 this.typeIndex = typeIndex;
@@ -1941,7 +2152,6 @@
 
                 const size = 1 + this.level * 0.15;
                 
-                // Core (Pulsierender Kern)
                 const coreGeo = new THREE.IcosahedronGeometry(0.8 * size, 0);
                 const coreMat = new THREE.MeshBasicMaterial({ 
                     color: this.data.color, 
@@ -1951,7 +2161,6 @@
                 this.hackerCore.position.y = 1;
                 this.mesh.add(this.hackerCore);
 
-                // Data Cloud
                 const cloudCount = 20 + this.level * 10;
                 const cloudGeo = new THREE.BufferGeometry();
                 const cloudPos = new Float32Array(cloudCount * 3);
@@ -1969,7 +2178,6 @@
                 this.dataCloud.position.y = 1;
                 this.mesh.add(this.dataCloud);
 
-                // Base
                 const baseGeo = new THREE.CylinderGeometry(1.5 * size, 2 * size, 0.5, 6);
                 const baseMat = new THREE.MeshStandardMaterial({ 
                     color: 0x222222,
@@ -1980,7 +2188,6 @@
                 base.position.y = 0.25;
                 this.mesh.add(base);
 
-                // Light
                 this.light = new THREE.PointLight(this.data.color, 1 + this.level * 0.5, 8);
                 this.light.position.y = 1;
                 this.mesh.add(this.light);
@@ -2009,7 +2216,6 @@
                 this.cooldown -= dt;
                 this.animTime += dt;
 
-                // Hacker Animation
                 if (this.hackerCore) {
                     this.hackerCore.rotation.y = this.animTime * 2;
                     this.hackerCore.rotation.z = this.animTime;
@@ -2042,12 +2248,10 @@
             }
 
             shoot(target) {
-                // UNTERSCHIEDLICHE SOUNDS FÜR JEDEN HACKER-TYP
                 if(this.typeIndex === 0) sfx.playSonicWave();
                 else if(this.typeIndex === 1) sfx.playTremoloWave();
                 else if(this.typeIndex === 2) sfx.playUnderwaterEcho();
 
-                // Flash effect
                 if (this.light) {
                     this.light.intensity = 3;
                     setTimeout(() => { this.light.intensity = 1 + this.level * 0.5; }, 100);
@@ -2058,21 +2262,19 @@
                     target,
                     this.data,
                     this.typeData.projectileSpeed,
-                    this.typeIndex  // Pass tower type for Natron
+                    this.typeIndex
                 ));
             }
         }
 
-        // --- PROJECTILE CLASS (BIT SPRITES) ---
         class Projectile {
             constructor(pos, target, data, speed, towerType) {
                 this.pos = pos;
                 this.target = target;
                 this.data = data;
                 this.speed = speed;
-                this.towerType = towerType; // For Natron damage tracking
+                this.towerType = towerType;
                 
-                // Random bit: 0 or 1
                 const tex = Math.random() > 0.5 ? texZero : texOne;
                 const mat = new THREE.SpriteMaterial({ 
                     map: tex, 
@@ -2130,7 +2332,6 @@
             }
         }
 
-        // --- SYSTEMS ---
         function spawnParticles(pos, color, count) {
             const geo = new THREE.BoxGeometry(0.2, 0.2, 0.2);
             const mat = new THREE.MeshBasicMaterial({ color: color });
@@ -2161,10 +2362,16 @@
             setTimeout(() => msg.style.opacity = 0, 2000);
 
             const level = LEVELS[gameState.levelIndex];
+            const cfg = level.isSandbox ? gameState.sandboxConfig : null;
 
-            let baseCount = 5;
-            let diffScale = 1.0;
+            let baseCount = cfg ? cfg.enemyCount : 5;
+            let diffScale = cfg ? cfg.difficultyScale : 1.0;
             let total = Math.floor(baseCount + (gameState.wave - 1) * 1.5 * diffScale);
+            
+            if (cfg && cfg.maxWaves && gameState.wave > cfg.maxWaves) {
+                victoryScreen();
+                return;
+            }
             
             const intervalTime = Math.max(200, 1500 - gameState.wave * 50);
             let count = 0;
@@ -2179,24 +2386,34 @@
                 let isBalloon = level.isBalloonLevel || false;
                 
                 if (!isBalloon) {
-                    const r = Math.random();
-                    
-                    if (gameState.wave > 3 && r > 0.85) type = 'SPEED';
-                    else if (gameState.wave > 5 && r > 0.9) type = 'TANK';
-                    
-                    // New enemy types
-                    if (gameState.wave >= 7) {
-                        if (r < 0.05) type = 'ASSASSIN';
-                        else if (r > 0.93 && r < 0.96) type = 'GHOST';
-                        else if (r > 0.96 && r < 0.98) type = 'SPLITTER';
+                    if (cfg) {
+                        const r = Math.random();
+                        const totalMix = cfg.enemyMix.normal + cfg.enemyMix.speed + cfg.enemyMix.tank;
+                        const normalThreshold = cfg.enemyMix.normal / totalMix;
+                        const speedThreshold = normalThreshold + (cfg.enemyMix.speed / totalMix);
+                        
+                        if (r < normalThreshold) type = 'NORMAL';
+                        else if (r < speedThreshold) type = 'SPEED';
+                        else type = 'TANK';
+                    } else {
+                        const r = Math.random();
+                        if (gameState.wave > 3 && r > 0.85) type = 'SPEED';
+                        else if (gameState.wave > 5 && r > 0.9) type = 'TANK';
+                        
+                        if (gameState.wave >= 7) {
+                            if (r < 0.05) type = 'ASSASSIN';
+                            else if (r > 0.93 && r < 0.96) type = 'GHOST';
+                            else if (r > 0.96 && r < 0.98) type = 'SPLITTER';
+                        }
+                        if (gameState.wave >= 10) {
+                            if (r > 0.88 && r < 0.91) type = 'JUGGERNAUT';
+                            else if (r > 0.98 && r < 0.99) type = 'HEALER';
+                            else if (r > 0.99) type = 'NATRON';
+                        }
                     }
-                    if (gameState.wave >= 10) {
-                        if (r > 0.88 && r < 0.91) type = 'JUGGERNAUT';
-                        else if (r > 0.98 && r < 0.99) type = 'HEALER';
-                        else if (r > 0.99) type = 'NATRON'; // NATRON spawnt selten
-                    }
                     
-                    if (gameState.wave % 5 === 0 && count === total - 1) type = 'BOSS';
+                    const bossInterval = cfg ? cfg.bossInterval : 5;
+                    if (gameState.wave % bossInterval === 0 && count === total - 1) type = 'BOSS';
                 }
 
                 if (isBalloon) {
@@ -2316,7 +2533,6 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        // --- INIT ---
         function init() {
             scene = new THREE.Scene();
             scene.fog = new THREE.FogExp2(0x000000, 0.012);
@@ -2361,6 +2577,9 @@
             bgMesh.position.y = -2;
             scene.add(bgMesh);
 
+            matrixSkyDome = createMatrixSkyDome();
+            scene.add(matrixSkyDome);
+
             raycaster = new THREE.Raycaster();
             mouse = new THREE.Vector2();
 
@@ -2371,7 +2590,6 @@
             animate();
         }
 
-        // --- MAIN LOOP ---
         const clock = new THREE.Clock();
 
         function animate() {
@@ -2381,6 +2599,9 @@
             const time = clock.getElapsedTime();
 
             bgUniforms.uTime.value = time;
+            if (matrixSkyDome) {
+                matrixSkyDome.userData.uniforms.uTime.value = time;
+            }
 
             if (shake.amount > 0) {
                 camera.position.x += (Math.random() - 0.5) * shake.amount;
