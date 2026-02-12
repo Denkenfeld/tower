@@ -1,0 +1,66 @@
+═══════════════════════════════════════════════════════════
+  DOWNLOAD CHECKLIST - 7 Files to Download
+═══════════════════════════════════════════════════════════
+
+⭐ CRITICAL - Download these 7 files NOW:
+
+□ 1. EnemyClass.js [code_file:19]
+     • Fixed scene references
+     • Added slow effects
+
+□ 2. CoreClass.js [code_file:20]
+     • Imports TILE_SIZE
+     • Fixed grid loading
+
+□ 3. ui.js [code_file:24]
+     • STACK button works
+     • All window callbacks
+
+□ 4. index.html [code_file:28]
+     • Pause overlay
+     • Settings panel
+     • Audio toggle
+
+□ 5. main.js [code_file:26]
+     • Scene initialization
+     • Lighting/speed controls
+
+□ 6. scene.js [code_file:25]
+     • Three.js setup
+     • Matrix sky shader
+
+□ 7. gameState.js [code_file:21]
+     • (from earlier batch)
+
+═══════════════════════════════════════════════════════════
+
+AFTER DOWNLOADING:
+
+1. Put all 17 .js files in same folder
+2. Run: python -m http.server 8000
+3. Open: http://localhost:8000
+4. Check console (F12) for:
+   ✅ 🎮 Initializing Neon Defense...
+   ✅ ✅ Scene initialized
+   ✅ ✅ Audio initialized
+   ✅ ✅ UI initialized
+   ✅ ✅ Animation loop started
+   ✅ 🎮 Ready to play!
+
+5. Click a level
+6. Should see:
+   ✅ 🎮 Starting Level X
+   ✅ 📍 Creating grid...
+   ✅ ✅ Grid created
+   ✅ 🔷 Creating neuro core...
+   ✅ ✅ Neuro core created
+
+═══════════════════════════════════════════════════════════
+
+IF PROBLEMS:
+- Clear cache (Ctrl+Shift+Delete)
+- Hard refresh (Ctrl+F5)
+- Check all 17 files present
+- Verify file names match exactly (case-sensitive)
+
+═══════════════════════════════════════════════════════════

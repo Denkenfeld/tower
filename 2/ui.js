@@ -14,7 +14,6 @@ export function updateUI() {
     if (livesEl) livesEl.innerText = gameState.lives + '%';
     if (waveEl) waveEl.innerText = gameState.wave;
 
-    // Update tower buttons
     TOWER_TYPES.forEach((type, idx) => {
         const btn = document.querySelector(`[data-type="${idx}"]`);
         if (btn) {
@@ -26,7 +25,6 @@ export function updateUI() {
         }
     });
 
-    // Update STACK tile button
     const tileBtn = document.querySelector('[data-type="tile"]');
     if (tileBtn) {
         if (gameState.money < TILE_COSTS.stack) {
@@ -40,7 +38,6 @@ export function updateUI() {
 export function selectTower(type) {
     gameState.selectedTowerType = type;
     setDeleteMode(false);
-
     document.querySelectorAll('.tower-btn').forEach(btn => btn.classList.remove('selected'));
     const selectedBtn = document.querySelector(`[data-type="${type}"]`);
     if (selectedBtn) selectedBtn.classList.add('selected');
@@ -49,7 +46,6 @@ export function selectTower(type) {
 export function selectTileMode() {
     gameState.selectedTowerType = -1;
     setDeleteMode(false);
-
     document.querySelectorAll('.tower-btn').forEach(btn => btn.classList.remove('selected'));
     const tileBtn = document.querySelector('[data-type="tile"]');
     if (tileBtn) tileBtn.classList.add('selected');
@@ -149,7 +145,6 @@ export function showMessage(text) {
     }
 }
 
-// EXPOSE TO WINDOW FOR HTML onclick
 window.selectTower = selectTower;
 window.selectTileMode = selectTileMode;
 window.toggleDeleteMode = toggleDeleteMode;
@@ -166,13 +161,10 @@ window.sellTower = function() {
     if (!selectedTower) return;
     const refund = Math.floor(selectedTower.getTotalCost() * 0.7);
     gameState.money += refund;
-
     const tile = getTileAt(selectedTower.mesh.position.x, selectedTower.mesh.position.z);
     if (tile) tile.tower = null;
-
     const idx = entities.towers.indexOf(selectedTower);
     if (idx !== -1) entities.towers.splice(idx, 1);
-
     hideTowerInfo();
     updateUI();
     sfx.playError();
@@ -185,7 +177,6 @@ window.repairTile = function() {
         sfx.playError();
         return;
     }
-
     gameState.money -= TILE_COSTS.repair;
     selectedTile.repair();
     hideTowerInfo();
@@ -201,4 +192,25 @@ window.togglePause = function() {
     } else {
         if (sfx.enabled) sfx.resumeBackgroundMusic();
     }
+};
+
+window.toggleAudio = function() {
+    sfx.enabled = !sfx.enabled;
+    const btn = document.getElementById('audio-toggle');
+    if (btn) btn.innerText = sfx.enabled ? '🔊' : '🔇';
+    if (!sfx.enabled) sfx.stopBackgroundMusic();
+    else if (!window.isPausedGlobal && !gameState.isGameOver) sfx.resumeBackgroundMusic();
+};
+
+window.showSettings = function() {
+    const panel = document.getElementById('settings-panel');
+    if (panel) panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+};
+
+window.updateLighting = function(type, value) {
+    // Will be handled by main.js callback
+};
+
+window.updateGameSpeed = function(value) {
+    // Will be handled by main.js callback  
 };

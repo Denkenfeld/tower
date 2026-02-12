@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEON DEFENSE - MODULAR EDITION</title>
+    <link rel="stylesheet" href="styles.css">
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+    <!-- Start Screen -->
+    <div id="start-screen" class="start-screen">
+        <h1 class="neon-title">NEON DEFENSE</h1>
+        <div class="level-select">
+            <div class="level-card" onclick="startGame(0)">
+                <h3>LEVEL 1</h3>
+                <p>Basic Defense</p>
+            </div>
+            <div class="level-card" onclick="startGame(1)">
+                <h3>LEVEL 2</h3>
+                <p>Curved Path</p>
+            </div>
+            <div class="level-card" onclick="startGame(2)">
+                <h3>LEVEL 3</h3>
+                <p>Complex Route</p>
+            </div>
+            <div class="level-card" onclick="startGame(3)">
+                <h3>LEVEL 4</h3>
+                <p>Ultimate Challenge</p>
+            </div>
+        </div>
+        <div style="margin-top: 20px; color: #0ff;">
+            <p>🎮 Enhanced Edition with:</p>
+            <p>✨ 6 Unique Towers • 🟨 Tile Stacking • ⚡ Special Abilities</p>
+        </div>
+    </div>
+
+    <!-- Game UI -->
+    <div id="ui-layer" class="ui-container" style="display:none">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="stat-box">
+                <span>💰 CREDITS:</span>
+                <span id="money-val">450</span>
+            </div>
+            <div class="stat-box">
+                <span>❤️ LIVES:</span>
+                <span id="lives-val">100%</span>
+            </div>
+            <div class="stat-box">
+                <span>🌊 WAVE:</span>
+                <span id="wave-val">1</span>
+            </div>
+            <button class="wave-btn" onclick="startWave()">START WAVE</button>
+            <button class="settings-btn" id="audio-toggle" onclick="toggleAudio()">🔊</button>
+            <button class="settings-btn" onclick="showSettings()">⚙️</button>
+            <button class="settings-btn" onclick="togglePause()">⏸️</button>
+        </div>
+
+        <!-- Build Menu -->
+        <div id="build-menu" style="display:none">
+            <div class="tower-btn selected" data-type="0" onclick="selectTower(0)">
+                <div class="tower-name">SNIPER</div>
+                <div style="font-size:20px">🎯</div>
+                <div class="tower-price">50 CR</div>
+            </div>
+            <div class="tower-btn" data-type="1" onclick="selectTower(1)">
+                <div class="tower-name">SCATTER</div>
+                <div style="font-size:20px">💥</div>
+                <div class="tower-price">100 CR</div>
+            </div>
+            <div class="tower-btn" data-type="2" onclick="selectTower(2)">
+                <div class="tower-name">BOMBER</div>
+                <div style="font-size:20px">💣</div>
+                <div class="tower-price">180 CR</div>
+            </div>
+            <div class="tower-btn" data-type="3" onclick="selectTower(3)">
+                <div class="tower-name">LASER</div>
+                <div style="font-size:20px">⚡</div>
+                <div class="tower-price">160 CR</div>
+            </div>
+            <div class="tower-btn" data-type="4" onclick="selectTower(4)">
+                <div class="tower-name">SLOW</div>
+                <div style="font-size:20px">❄️</div>
+                <div class="tower-price">140 CR</div>
+            </div>
+            <div class="tower-btn" data-type="5" onclick="selectTower(5)">
+                <div class="tower-name">CHAIN</div>
+                <div style="font-size:20px">⚡</div>
+                <div class="tower-price">220 CR</div>
+            </div>
+            <div class="tower-btn" data-type="tile" onclick="selectTileMode()">
+                <div class="tower-name">STACK</div>
+                <div style="font-size:20px">🟨</div>
+                <div class="tower-price">150 CR</div>
+            </div>
+            <div class="tower-btn" id="delete-btn" onclick="toggleDeleteMode()">
+                <div class="tower-name">DELETE</div>
+                <div style="font-size:20px">🗑️</div>
+                <div class="tower-price">SELL</div>
+            </div>
+        </div>
+
+        <!-- Tower Info Panel -->
+        <div id="tower-info-panel" class="tower-info-panel" style="display:none">
+            <h3 id="tower-info-name">TOWER</h3>
+            <p id="tower-info-level">Level 1/3</p>
+            <p id="tower-info-damage">Damage: 10</p>
+            <p id="tower-info-range">Range: 15</p>
+            <p id="tower-info-rate">Fire Rate: 1.0s</p>
+            <button id="upgrade-btn" class="upgrade-btn" onclick="upgradeTower()">UPGRADE</button>
+            <button id="repair-btn" class="upgrade-btn" onclick="repairTile()" style="display:none">REPAIR (200 CR)</button>
+            <button class="sell-btn" onclick="sellTower()">SELL</button>
+            <button class="close-btn" onclick="hideTowerInfo()">✕</button>
+        </div>
+
+        <!-- Settings Panel -->
+        <div id="settings-panel" class="settings-panel" style="display:none">
+            <h3>SETTINGS</h3>
+            <div class="setting-row">
+                <label>Ambient Light: <span id="ambient-val">0.4</span></label>
+                <input type="range" min="0" max="100" value="40" oninput="updateLighting('ambient', this.value)">
+            </div>
+            <div class="setting-row">
+                <label>Directional Light: <span id="dir-val">1.2</span></label>
+                <input type="range" min="0" max="100" value="40" oninput="updateLighting('directional', this.value)">
+            </div>
+            <div class="setting-row">
+                <label>Game Speed: <span id="speed-val">1.0x</span></label>
+                <input type="range" min="50" max="200" value="100" oninput="updateGameSpeed(this.value)">
+            </div>
+            <button class="close-btn" onclick="showSettings()">✕</button>
+        </div>
+
+        <!-- Message Area -->
+        <div id="msg-area" class="msg-area"></div>
+    </div>
+
+    <!-- Pause Overlay -->
+    <div id="pause-overlay" class="overlay" style="display:none">
+        <div class="overlay-content">
+            <h2>PAUSED</h2>
+            <button class="menu-btn" onclick="togglePause()">RESUME</button>
+            <button class="menu-btn" onclick="restartLevel()">RESTART</button>
+            <button class="menu-btn" onclick="showMenu()">MAIN MENU</button>
+        </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="game-over-screen" class="overlay" style="display:none">
+        <div class="overlay-content">
+            <h2>GAME OVER</h2>
+            <p id="final-score">Wave Reached: 0</p>
+            <button class="menu-btn" onclick="restartLevel()">RETRY</button>
+            <button class="menu-btn" onclick="showMenu()">MAIN MENU</button>
+        </div>
+    </div>
+
+    <!-- Victory Screen -->
+    <div id="victory-screen" class="overlay" style="display:none">
+        <div class="overlay-content">
+            <h2>VICTORY!</h2>
+            <p id="victory-msg">Level Complete!</p>
+            <button class="menu-btn" onclick="showMenu()">MAIN MENU</button>
+        </div>
+    </div>
+
+</body>
+<script type="module" src="main.js"></script>
+</html>

@@ -22,37 +22,39 @@ window.isPausedGlobal = false;
 window.deleteMode = false;
 
 export function init() {
-    // Clear game state
+    console.log('🎮 Initializing game...');
+
     resetGameState();
     entities.towers = [];
     entities.enemies = [];
     entities.projectiles = [];
 
-    // Clear existing scene objects (but keep scene itself)
     if (scene) {
-        // Remove all game objects but keep lights and sky
         const objectsToRemove = [];
         scene.children.forEach(child => {
-            if (child !== ambientLight && child !== directionalLight && child.type !== 'Mesh' || !child.material || !child.material.side || child.material.side !== THREE.BackSide) {
+            if (child !== ambientLight && child !== directionalLight && 
+                !(child.type === 'Mesh' && child.material && child.material.side === THREE.BackSide)) {
                 objectsToRemove.push(child);
             }
         });
         objectsToRemove.forEach(obj => scene.remove(obj));
     }
 
-    // Create grid
+    console.log('📍 Creating grid...');
     createGrid(scene);
     markPathTiles();
+    console.log('✅ Grid created');
 
-    // Create neuro core
+    console.log('🔷 Creating neuro core...');
     neuroCore = new NeuroCore(scene);
+    console.log('✅ Neuro core created');
 
-    // Add click listener
     if (!window.clickListenerAdded) {
         window.addEventListener('click', onMouseClick);
         window.clickListenerAdded = true;
     }
 
+    console.log('✅ Game initialized');
     return true;
 }
 
@@ -68,7 +70,6 @@ function animate() {
     controls.update();
     updateSkyDome(now);
 
-    // Only update game logic if not paused
     if (!window.isPausedGlobal && !gameState.isGameOver) {
         const actualDt = dt * gameSpeed;
 
@@ -98,8 +99,7 @@ function animate() {
 function onMouseClick(event) {
     if (window.isPausedGlobal || gameState.isGameOver) return;
 
-    // Ignore clicks on UI elements
-    if (event.target.closest('.ui-container, .start-screen, .game-over-screen, .victory-screen, .pause-overlay')) {
+    if (event.target.closest('.ui-container, .start-screen, .game-over-screen, .victory-screen, .pause-overlay, .settings-panel')) {
         return;
     }
 
@@ -214,6 +214,7 @@ function onMouseClick(event) {
 }
 
 window.startGameCallback = function(levelIndex) {
+    console.log(`🎮 Starting Level ${levelIndex + 1}`);
     gameState.levelIndex = levelIndex;
     gameState.wave = 1;
     gameState.money = LEVELS[levelIndex].isSandbox ? gameState.sandboxConfig.startingMoney : 450;
@@ -253,24 +254,35 @@ window.restartLevel = function() {
 
 window.startWave = () => startWave(hideTowerInfo, scene, neuroCore, shake);
 
-// Initialize scene IMMEDIATELY on page load for background
+window.updateLighting = function(type, value) {
+    const intensity = value / 100 * 3;
+    if (type === 'ambient') {
+        ambientLight.intensity = intensity;
+        document.getElementById('ambient-val').innerText = intensity.toFixed(2);
+    } else if (type === 'directional') {
+        directionalLight.intensity = intensity;
+        document.getElementById('dir-val').innerText = intensity.toFixed(2);
+    }
+};
+
+window.updateGameSpeed = function(value) {
+    gameSpeed.value = value / 100;
+    document.getElementById('speed-val').innerText = gameSpeed.value.toFixed(1) + 'x';
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🎮 Initializing Neon Defense...');
 
-    // Initialize Three.js scene first
     initScene();
     sceneInitialized = true;
     console.log('✅ Scene initialized');
 
-    // Initialize audio
     sfx.init();
     console.log('✅ Audio initialized');
 
-    // Update UI
     updateUI();
     console.log('✅ UI initialized');
 
-    // Start animation loop (renders background scene)
     animate();
     console.log('✅ Animation loop started');
 

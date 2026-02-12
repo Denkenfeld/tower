@@ -1,5 +1,6 @@
 // ========== NEURO CORE CLASS ==========
 import * as THREE from 'three';
+import { TILE_SIZE } from './config.js';
 
 export class NeuroCore {
             constructor(x, z) {
@@ -129,3 +130,5 @@ export class NeuroCore {
                 }
             }
         }
+
+        function 
