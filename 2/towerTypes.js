@@ -1,82 +1,87 @@
-// ========== 6 UNIQUE TOWER TYPES MODULE ==========
+// ========== TOWER TYPE DEFINITIONS (6 UNIQUE TOWERS) ==========
 
 export const TOWER_TYPES = [
+    // 0: SNIPER - Long range, high damage, single target
     {
-        name: 'HACKER-0',
-        displayName: 'Pulse Sniper',
-        icon: '🎯',
-        baseCost: 50,
+        name: 'SNIPER',
+        displayName: 'Sniper Tower',
         shape: 'sniper',
+        baseCost: 50,
+        projectileSpeed: 25,
         upgrades: [
-            { damage: 12, range: 22, rate: 0.35, color: 0x00ffff, cost: 0 },
-            { damage: 28, range: 27, rate: 0.28, color: 0x00ddff, cost: 80 },
-            { damage: 55, range: 32, rate: 0.22, color: 0x0088ff, cost: 150 }
-        ],
-        projectileSpeed: 60
+            { cost: 0, damage: 15, range: 18, rate: 1.2, color: 0xff0000 },
+            { cost: 50, damage: 30, range: 22, rate: 1.0, color: 0xff3333 },
+            { cost: 100, damage: 60, range: 28, rate: 0.8, color: 0xff6666 }
+        ]
     },
+
+    // 1: SCATTER - Multiple projectiles
     {
-        name: 'HACKER-1',
+        name: 'SCATTER',
         displayName: 'Scatter Cannon',
-        icon: '💥',
-        baseCost: 100,
         shape: 'cannon',
+        baseCost: 100,
+        projectileSpeed: 18,
         upgrades: [
-            { damage: 18, range: 14, rate: 1.2, color: 0xffff00, cost: 0, scatter: 3, spread: 0.3 },
-            { damage: 32, range: 17, rate: 1.0, color: 0xffcc00, cost: 180, scatter: 5, spread: 0.4 },
-            { damage: 55, range: 20, rate: 0.85, color: 0xff8800, cost: 320, scatter: 7, spread: 0.5 }
-        ],
-        projectileSpeed: 35
+            { cost: 0, damage: 8, range: 12, rate: 1.5, color: 0xff8800, scatter: 3, spread: 0.3 },
+            { cost: 80, damage: 12, range: 14, rate: 1.3, color: 0xffaa00, scatter: 5, spread: 0.4 },
+            { cost: 150, damage: 18, range: 16, rate: 1.1, color: 0xffcc00, scatter: 7, spread: 0.5 }
+        ]
     },
+
+    // 2: BOMBER - AOE damage
     {
-        name: 'HACKER-X',
-        displayName: 'Plasma Bomber',
-        icon: '💣',
-        baseCost: 180,
+        name: 'BOMBER',
+        displayName: 'Bomber',
         shape: 'sphere',
+        baseCost: 180,
+        projectileSpeed: 12,
         upgrades: [
-            { damage: 30, range: 13, rate: 2.2, color: 0xff00ff, cost: 0, aoe: 6 },
-            { damage: 60, range: 16, rate: 1.8, color: 0xff00cc, cost: 240, aoe: 8 },
-            { damage: 110, range: 19, rate: 1.5, color: 0xff0088, cost: 420, aoe: 11 }
-        ],
-        projectileSpeed: 18
+            { cost: 0, damage: 20, range: 14, rate: 2.0, color: 0x00ff00, aoe: 4, explosionRadius: 3 },
+            { cost: 120, damage: 35, range: 16, rate: 1.8, color: 0x33ff33, aoe: 6, explosionRadius: 4 },
+            { cost: 200, damage: 55, range: 18, rate: 1.5, color: 0x66ff66, aoe: 8, explosionRadius: 5 }
+        ]
     },
+
+    // 3: LASER - Piercing beam
     {
-        name: 'HACKER-L',
-        displayName: 'Laser Beam',
-        icon: '⚡',
-        baseCost: 160,
+        name: 'LASER',
+        displayName: 'Laser Tower',
         shape: 'laser',
+        baseCost: 160,
+        projectileSpeed: 30,
         upgrades: [
-            { damage: 6, range: 26, rate: 0.08, color: 0xff0000, cost: 0, beam: true, pierce: 2 },
-            { damage: 12, range: 32, rate: 0.06, color: 0xff3300, cost: 210, beam: true, pierce: 4 },
-            { damage: 22, range: 38, rate: 0.05, color: 0xff6600, cost: 380, beam: true, pierce: 7 }
-        ],
-        projectileSpeed: 120
+            { cost: 0, damage: 12, range: 16, rate: 0.8, color: 0x00ffff, beam: true, pierce: 2 },
+            { cost: 100, damage: 22, range: 20, rate: 0.7, color: 0x33ffff, beam: true, pierce: 4 },
+            { cost: 180, damage: 38, range: 24, rate: 0.6, color: 0x66ffff, beam: true, pierce: 7 }
+        ]
     },
+
+    // 4: SLOW - Debuff tower
     {
-        name: 'HACKER-S',
-        displayName: 'Slow Field',
-        icon: '❄️',
-        baseCost: 140,
+        name: 'SLOW',
+        displayName: 'Cryo Field',
         shape: 'ring',
+        baseCost: 140,
+        projectileSpeed: 20,
         upgrades: [
-            { damage: 4, range: 22, rate: 0.5, color: 0x00ff88, cost: 0, slow: 0.5, slowDuration: 2.5 },
-            { damage: 8, range: 28, rate: 0.4, color: 0x00ffaa, cost: 170, slow: 0.35, slowDuration: 3.5 },
-            { damage: 14, range: 34, rate: 0.32, color: 0x00ffcc, cost: 300, slow: 0.22, slowDuration: 4.5 }
-        ],
-        projectileSpeed: 28
+            { cost: 0, damage: 5, range: 10, rate: 1.0, color: 0x0088ff, slow: 0.5, slowDuration: 2 },
+            { cost: 90, damage: 8, range: 13, rate: 0.9, color: 0x33aaff, slow: 0.35, slowDuration: 3 },
+            { cost: 160, damage: 12, range: 16, rate: 0.8, color: 0x66ccff, slow: 0.22, slowDuration: 4 }
+        ]
     },
+
+    // 5: CHAIN - Chain lightning
     {
-        name: 'HACKER-C',
-        displayName: 'Chain Lightning',
-        icon: '⚡',
-        baseCost: 220,
+        name: 'CHAIN',
+        displayName: 'Tesla Coil',
         shape: 'coil',
+        baseCost: 220,
+        projectileSpeed: 22,
         upgrades: [
-            { damage: 35, range: 17, rate: 2.0, color: 0xccff00, cost: 0, chain: 3, chainRange: 9 },
-            { damage: 65, range: 21, rate: 1.6, color: 0xaaff00, cost: 270, chain: 5, chainRange: 11 },
-            { damage: 115, range: 25, rate: 1.3, color: 0x88ff00, cost: 460, chain: 8, chainRange: 14 }
-        ],
-        projectileSpeed: 50
+            { cost: 0, damage: 18, range: 14, rate: 1.5, color: 0xff00ff, chain: 3, chainRange: 6 },
+            { cost: 140, damage: 30, range: 16, rate: 1.3, color: 0xff33ff, chain: 5, chainRange: 8 },
+            { cost: 240, damage: 50, range: 18, rate: 1.1, color: 0xff66ff, chain: 8, chainRange: 10 }
+        ]
     }
 ];

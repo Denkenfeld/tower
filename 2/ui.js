@@ -14,17 +14,20 @@ export function updateUI() {
     if (livesEl) livesEl.innerText = gameState.lives + '%';
     if (waveEl) waveEl.innerText = gameState.wave;
 
-    TOWER_TYPES.forEach((type, idx) => {
-        const btn = document.querySelector(`[data-type="${idx}"]`);
+    // Update tower buttons (indices 0-5)
+    for (let i = 0; i < TOWER_TYPES.length; i++) {
+        const btn = document.querySelector(`[data-type="${i}"]`);
         if (btn) {
+            const type = TOWER_TYPES[i];
             if (gameState.money < type.baseCost) {
                 btn.classList.add('disabled');
             } else {
                 btn.classList.remove('disabled');
             }
         }
-    });
+    }
 
+    // Update STACK tile button
     const tileBtn = document.querySelector('[data-type="tile"]');
     if (tileBtn) {
         if (gameState.money < TILE_COSTS.stack) {
@@ -36,8 +39,15 @@ export function updateUI() {
 }
 
 export function selectTower(type) {
+    // Validate type is within bounds
+    if (type < 0 || type >= TOWER_TYPES.length) {
+        console.error(`Invalid tower type: ${type}`);
+        return;
+    }
+
     gameState.selectedTowerType = type;
     setDeleteMode(false);
+
     document.querySelectorAll('.tower-btn').forEach(btn => btn.classList.remove('selected'));
     const selectedBtn = document.querySelector(`[data-type="${type}"]`);
     if (selectedBtn) selectedBtn.classList.add('selected');
@@ -46,6 +56,7 @@ export function selectTower(type) {
 export function selectTileMode() {
     gameState.selectedTowerType = -1;
     setDeleteMode(false);
+
     document.querySelectorAll('.tower-btn').forEach(btn => btn.classList.remove('selected'));
     const tileBtn = document.querySelector('[data-type="tile"]');
     if (tileBtn) tileBtn.classList.add('selected');
@@ -145,6 +156,7 @@ export function showMessage(text) {
     }
 }
 
+// Expose functions to window for HTML onclick handlers
 window.selectTower = selectTower;
 window.selectTileMode = selectTileMode;
 window.toggleDeleteMode = toggleDeleteMode;
@@ -205,12 +217,4 @@ window.toggleAudio = function() {
 window.showSettings = function() {
     const panel = document.getElementById('settings-panel');
     if (panel) panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-};
-
-window.updateLighting = function(type, value) {
-    // Will be handled by main.js callback
-};
-
-window.updateGameSpeed = function(value) {
-    // Will be handled by main.js callback  
 };

@@ -130,5 +130,3 @@ export class NeuroCore {
                 }
             }
         }
-
-        function 
