@@ -14,6 +14,7 @@ export function updateUI() {
     if (livesEl) livesEl.innerText = gameState.lives + '%';
     if (waveEl) waveEl.innerText = gameState.wave;
 
+    // Update tower buttons
     TOWER_TYPES.forEach((type, idx) => {
         const btn = document.querySelector(`[data-type="${idx}"]`);
         if (btn) {
@@ -24,6 +25,16 @@ export function updateUI() {
             }
         }
     });
+
+    // Update STACK tile button
+    const tileBtn = document.querySelector('[data-type="tile"]');
+    if (tileBtn) {
+        if (gameState.money < TILE_COSTS.stack) {
+            tileBtn.classList.add('disabled');
+        } else {
+            tileBtn.classList.remove('disabled');
+        }
+    }
 }
 
 export function selectTower(type) {
@@ -138,6 +149,7 @@ export function showMessage(text) {
     }
 }
 
+// EXPOSE TO WINDOW FOR HTML onclick
 window.selectTower = selectTower;
 window.selectTileMode = selectTileMode;
 window.toggleDeleteMode = toggleDeleteMode;
