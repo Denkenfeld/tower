@@ -16,33 +16,42 @@ let neuroCore = null;
 let raycaster = new THREE.Raycaster();
 let mouse = new THREE.Vector2();
 let lastTime = 0;
+let sceneInitialized = false;
 
 window.isPausedGlobal = false;
 window.deleteMode = false;
 
 export function init() {
-    clearScene();
-    clearGrid(scene);
-
+    // Clear game state
     resetGameState();
     entities.towers = [];
     entities.enemies = [];
     entities.projectiles = [];
 
-    if (!renderer) initScene();
+    // Clear existing scene objects (but keep scene itself)
+    if (scene) {
+        // Remove all game objects but keep lights and sky
+        const objectsToRemove = [];
+        scene.children.forEach(child => {
+            if (child !== ambientLight && child !== directionalLight && child.type !== 'Mesh' || !child.material || !child.material.side || child.material.side !== THREE.BackSide) {
+                objectsToRemove.push(child);
+            }
+        });
+        objectsToRemove.forEach(obj => scene.remove(obj));
+    }
 
-    scene.fog = new THREE.FogExp2(0x000000, 0.02);
-    scene.add(ambientLight);
-    scene.add(directionalLight);
-
+    // Create grid
     createGrid(scene);
     markPathTiles();
 
+    // Create neuro core
     neuroCore = new NeuroCore(scene);
 
-    window.addEventListener('click', onMouseClick);
-
-    sfx.init();
+    // Add click listener
+    if (!window.clickListenerAdded) {
+        window.addEventListener('click', onMouseClick);
+        window.clickListenerAdded = true;
+    }
 
     return true;
 }
@@ -54,40 +63,45 @@ function animate() {
     const dt = Math.min(now - lastTime, 0.1);
     lastTime = now;
 
-    if (window.isPausedGlobal || gameState.isGameOver) {
-        renderer.render(scene, camera);
-        return;
-    }
-
-    const actualDt = dt * gameSpeed;
+    if (!renderer || !scene || !camera) return;
 
     controls.update();
     updateSkyDome(now);
 
-    if (neuroCore) neuroCore.update(actualDt);
+    // Only update game logic if not paused
+    if (!window.isPausedGlobal && !gameState.isGameOver) {
+        const actualDt = dt * gameSpeed;
 
-    updateTiles(actualDt);
-    entities.towers.forEach(tower => tower.update(actualDt));
-    entities.enemies.forEach(enemy => enemy.update(actualDt));
-    entities.enemies = entities.enemies.filter(e => !e.dead);
-    entities.projectiles.forEach(proj => proj.update(actualDt));
-    entities.projectiles = entities.projectiles.filter(p => p.active);
+        if (neuroCore) neuroCore.update(actualDt);
 
-    if (shake.amount > 0) {
-        camera.position.x += (Math.random() - 0.5) * shake.amount;
-        camera.position.y += (Math.random() - 0.5) * shake.amount;
-        camera.position.z += (Math.random() - 0.5) * shake.amount;
-        shake.amount *= 0.9;
+        updateTiles(actualDt);
+        entities.towers.forEach(tower => tower.update(actualDt));
+        entities.enemies.forEach(enemy => enemy.update(actualDt));
+        entities.enemies = entities.enemies.filter(e => !e.dead);
+        entities.projectiles.forEach(proj => proj.update(actualDt));
+        entities.projectiles = entities.projectiles.filter(p => p.active);
+
+        if (shake.amount > 0) {
+            camera.position.x += (Math.random() - 0.5) * shake.amount;
+            camera.position.y += (Math.random() - 0.5) * shake.amount;
+            camera.position.z += (Math.random() - 0.5) * shake.amount;
+            shake.amount *= 0.9;
+        }
+
+        updateWaveSpawning(actualDt, scene, neuroCore, shake, () => gameSpeed);
+        checkWaveComplete(scene, updateUI, showMessage);
     }
-
-    updateWaveSpawning(actualDt, scene, neuroCore, shake, () => gameSpeed);
-    checkWaveComplete(scene, updateUI, showMessage);
 
     renderer.render(scene, camera);
 }
 
 function onMouseClick(event) {
     if (window.isPausedGlobal || gameState.isGameOver) return;
+
+    // Ignore clicks on UI elements
+    if (event.target.closest('.ui-container, .start-screen, .game-over-screen, .victory-screen, .pause-overlay')) {
+        return;
+    }
 
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -239,9 +253,26 @@ window.restartLevel = function() {
 
 window.startWave = () => startWave(hideTowerInfo, scene, neuroCore, shake);
 
+// Initialize scene IMMEDIATELY on page load for background
 document.addEventListener('DOMContentLoaded', () => {
-    sfx.init();
+    console.log('🎮 Initializing Neon Defense...');
+
+    // Initialize Three.js scene first
     initScene();
+    sceneInitialized = true;
+    console.log('✅ Scene initialized');
+
+    // Initialize audio
+    sfx.init();
+    console.log('✅ Audio initialized');
+
+    // Update UI
     updateUI();
+    console.log('✅ UI initialized');
+
+    // Start animation loop (renders background scene)
     animate();
+    console.log('✅ Animation loop started');
+
+    console.log('🎮 Ready to play!');
 });
