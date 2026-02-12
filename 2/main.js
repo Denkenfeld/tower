@@ -4,7 +4,6 @@ import { LEVELS } from './levels.js';
 import { TOWER_TYPES } from './towerTypes.js';
 import { TILE_COSTS } from './config.js';
 import { Tower } from './TowerClass.js';
-import { Enemy } from './EnemyClass.js';
 import { NeuroCore } from './CoreClass.js';
 import { sfx } from './audio.js';
 import { gameState, entities, shake, gameSpeed, resetGameState } from './gameState.js';
@@ -18,43 +17,31 @@ let raycaster = new THREE.Raycaster();
 let mouse = new THREE.Vector2();
 let lastTime = 0;
 
-// Global pause state
 window.isPausedGlobal = false;
+window.deleteMode = false;
 
 export function init() {
-    // Clear everything
     clearScene();
     clearGrid(scene);
 
     resetGameState();
-
     entities.towers = [];
     entities.enemies = [];
     entities.projectiles = [];
 
-    // Initialize scene if not already done
-    if (!renderer) {
-        initScene();
-    }
+    if (!renderer) initScene();
 
-    // Recreate scene basics
     scene.fog = new THREE.FogExp2(0x000000, 0.02);
-
-    // Re-add lights
     scene.add(ambientLight);
     scene.add(directionalLight);
 
-    // Grid
     createGrid(scene);
     markPathTiles();
 
-    // Neuro Core
     neuroCore = new NeuroCore(scene);
 
-    // Event listeners
     window.addEventListener('click', onMouseClick);
 
-    // Start audio
     sfx.init();
 
     return true;
@@ -74,32 +61,18 @@ function animate() {
 
     const actualDt = dt * gameSpeed;
 
-    // Update controls
     controls.update();
-
-    // Update sky dome
     updateSkyDome(now);
 
-    // Update neuro core
-    if (neuroCore) {
-        neuroCore.update(actualDt);
-    }
+    if (neuroCore) neuroCore.update(actualDt);
 
-    // Update tiles
     updateTiles(actualDt);
-
-    // Update towers
     entities.towers.forEach(tower => tower.update(actualDt));
-
-    // Update enemies
     entities.enemies.forEach(enemy => enemy.update(actualDt));
     entities.enemies = entities.enemies.filter(e => !e.dead);
-
-    // Update projectiles
     entities.projectiles.forEach(proj => proj.update(actualDt));
     entities.projectiles = entities.projectiles.filter(p => p.active);
 
-    // Camera shake
     if (shake.amount > 0) {
         camera.position.x += (Math.random() - 0.5) * shake.amount;
         camera.position.y += (Math.random() - 0.5) * shake.amount;
@@ -107,13 +80,9 @@ function animate() {
         shake.amount *= 0.9;
     }
 
-    // Wave spawning
-    updateWaveSpawning(actualDt, scene, neuroCore, shake, gameSpeed);
+    updateWaveSpawning(actualDt, scene, neuroCore, shake, () => gameSpeed);
+    checkWaveComplete(scene, updateUI, showMessage);
 
-    // Check wave completion
-    checkWaveComplete(scene);
-
-    // Render
     renderer.render(scene, camera);
 }
 
@@ -129,7 +98,6 @@ function onMouseClick(event) {
     if (intersects.length > 0) {
         const obj = intersects[0].object;
 
-        // Find tile or tower
         let tile = null;
         let tower = null;
 
@@ -146,7 +114,6 @@ function onMouseClick(event) {
             parent = parent.parent;
         }
 
-        // DELETE MODE
         if (window.deleteMode && tower) {
             const refund = Math.floor(tower.getTotalCost() * 0.7);
             gameState.money += refund;
@@ -161,34 +128,28 @@ function onMouseClick(event) {
             return;
         }
 
-        // SHOW TOWER INFO
         if (tower) {
             showTowerInfo(tower);
             return;
         }
 
-        // TILE INTERACTIONS
         if (tile) {
-            // Show repair info for destroyed tiles
             if (tile.isCollapsed) {
                 showTileInfo(tile);
                 return;
             }
 
-            // Can't build on path
             if (tile.isPath) {
                 showMessage("CAN'T BUILD ON PATH!");
                 sfx.playError();
                 return;
             }
 
-            // Show existing tower info
             if (tile.tower) {
                 showTowerInfo(tile.tower);
                 return;
             }
 
-            // TILE STACKING MODE
             if (gameState.selectedTowerType === -1) {
                 if (tile.stackLevel >= 2) {
                     showMessage("TILE ALREADY DOUBLE-STACKED!");
@@ -206,7 +167,6 @@ function onMouseClick(event) {
                 return;
             }
 
-            // BUILD TOWER
             const towerType = TOWER_TYPES[gameState.selectedTowerType];
             if (gameState.money >= towerType.baseCost) {
                 gameState.money -= towerType.baseCost;
@@ -220,7 +180,6 @@ function onMouseClick(event) {
                 entities.towers.push(newTower);
                 scene.add(newTower.mesh);
 
-                // Spawn animation
                 newTower.mesh.scale.set(0.1, 0.1, 0.1);
                 const scaleUp = () => {
                     if (newTower.mesh.scale.x < 1) {
@@ -240,14 +199,6 @@ function onMouseClick(event) {
     }
 }
 
-function endGame() {
-    gameState.isGameOver = true;
-    document.getElementById('game-over-screen').style.display = 'flex';
-    document.getElementById('final-score').innerText = `Wave Reached: ${gameState.wave}`;
-    sfx.stopBackgroundMusic();
-}
-
-// Callback for UI
 window.startGameCallback = function(levelIndex) {
     gameState.levelIndex = levelIndex;
     gameState.wave = 1;
@@ -265,35 +216,32 @@ window.startGameCallback = function(levelIndex) {
     init();
     updateUI();
 
-    if (sfx.enabled) {
-        sfx.resumeBackgroundMusic();
-    }
+    if (sfx.enabled) sfx.resumeBackgroundMusic();
 };
 
-window.updateLightingCallback = function(type, value) {
-    const val = parseFloat(value) / 100;
-    if (type === 'ambient') {
-        ambientLight.intensity = val * 2;
-        document.getElementById('ambient-val').innerText = val.toFixed(1);
-    } else if (type === 'directional') {
-        directionalLight.intensity = val * 3;
-        document.getElementById('dir-val').innerText = val.toFixed(1);
-    }
+window.startGame = function(levelIndex) {
+    window.startGameCallback(levelIndex);
 };
 
-window.updateGameSpeedCallback = function(value) {
-    const speed = parseFloat(value) / 100;
-    // gameSpeed is exported from gameState, need setter
-    document.getElementById('speed-val').innerText = speed.toFixed(1) + 'x';
+window.showMenu = function() {
+    document.getElementById('start-screen').style.display = 'flex';
+    document.getElementById('ui-layer').style.display = 'none';
+    document.getElementById('game-over-screen').style.display = 'none';
+    document.getElementById('victory-screen').style.display = 'none';
+    document.getElementById('pause-overlay').style.display = 'none';
+    window.isPausedGlobal = false;
+    sfx.stopBackgroundMusic();
 };
 
-// Start animation loop
+window.restartLevel = function() {
+    window.startGameCallback(gameState.levelIndex);
+};
+
+window.startWave = () => startWave(hideTowerInfo, scene, neuroCore, shake);
+
 document.addEventListener('DOMContentLoaded', () => {
     sfx.init();
     initScene();
     updateUI();
     animate();
 });
-
-// Expose for wave system
-window.startWave = () => startWave(hideTowerInfo, scene, neuroCore, shake);

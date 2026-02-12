@@ -16,12 +16,12 @@ export const DEFAULT_GAME_STATE = {
     difficultyScale: 1.0,
     bossInterval: 5,
     startingMoney: 450,
-    color: null, // Will be set from THREE.Color
+    color: null,
     towerRestrictions: [true, true, true, true, true, true],
     maxWaves: null
 };
 
 export const TILE_COSTS = {
-    stack: 150,   // Cost to stack a tile to level 2
-    repair: 200   // Cost to repair a destroyed tile
+    stack: 150,
+    repair: 200
 };

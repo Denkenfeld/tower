@@ -49,9 +49,7 @@ export function updateTiles(dt) {
 
 export function clearGrid(scene) {
     tiles.forEach(tile => {
-        if (tile.mesh) {
-            scene.remove(tile.mesh);
-        }
+        if (tile.mesh) scene.remove(tile.mesh);
     });
     tiles = [];
     entities.tiles = [];

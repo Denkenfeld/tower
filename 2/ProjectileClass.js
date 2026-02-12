@@ -1,7 +1,6 @@
-// ========== ENHANCED PROJECTILE CLASS WITH SPECIAL BEHAVIORS ==========
+// ========== ENHANCED PROJECTILE CLASS ==========
 import * as THREE from 'three';
 
-// Texture creation
 
 
 export class Projectile {
@@ -14,8 +13,6 @@ export class Projectile {
         this.active = true;
         this.scene = scene;
         this.entities = entities;
-
-        // Special behavior flags
         this.isBeam = data.beam || false;
         this.spreadAngle = 0;
         this.chainCount = 0;
@@ -26,8 +23,7 @@ export class Projectile {
 
         if (this.isBeam) {
             const lineMat = new THREE.LineBasicMaterial({ color: data.color, linewidth: 3, transparent: true, opacity: 0.9 });
-            const lineGeo = new THREE.BufferGeometry();
-            this.mesh = new THREE.Line(lineGeo, lineMat);
+            this.mesh = new THREE.Line(new THREE.BufferGeometry(), lineMat);
             this.beamLife = 0.15;
         } else {
             const tex = Math.random() > 0.5 ? texZero : texOne;
@@ -46,65 +42,37 @@ export class Projectile {
         if (!this.active) return;
         if (this.isBeam) {
             this.beamLife -= dt;
-            if (this.beamLife <= 0) {
-                this.active = false;
-                this.scene.remove(this.mesh);
-                return;
-            }
+            if (this.beamLife <= 0) { this.active = false; this.scene.remove(this.mesh); return; }
             if (!this.target.dead && !this.target.isPhasing) {
-                const targetPos = this.target.mesh.position.clone();
-                targetPos.y += 1;
-                const points = [this.pos, targetPos];
-                this.mesh.geometry.setFromPoints(points);
-                if (this.mesh.geometry.attributes.position) {
-                    this.mesh.geometry.attributes.position.needsUpdate = true;
-                }
+                const targetPos = this.target.mesh.position.clone(); targetPos.y += 1;
+                this.mesh.geometry.setFromPoints([this.pos, targetPos]);
+                if (this.mesh.geometry.attributes.position) this.mesh.geometry.attributes.position.needsUpdate = true;
             }
             return;
         }
         if (this.target.dead || this.target.isPhasing) {
-            if (!this.data.aoe) {
-                this.active = false;
-                this.scene.remove(this.mesh);
-                return;
-            }
+            if (!this.data.aoe) { this.active = false; this.scene.remove(this.mesh); return; }
         }
-        const targetPos = this.target.mesh.position.clone();
-        targetPos.y += 1;
+        const targetPos = this.target.mesh.position.clone(); targetPos.y += 1;
         let dir = new THREE.Vector3().subVectors(targetPos, this.mesh.position).normalize();
         if (this.spreadAngle !== 0) {
-            const spreadMatrix = new THREE.Matrix4().makeRotationY(this.spreadAngle);
-            dir.applyMatrix4(spreadMatrix);
+            dir.applyMatrix4(new THREE.Matrix4().makeRotationY(this.spreadAngle));
         }
         this.mesh.position.add(dir.multiplyScalar(this.speed * dt));
-        if (this.mesh.position.distanceTo(targetPos) < 1.0) {
-            this.hit();
-        }
+        if (this.mesh.position.distanceTo(targetPos) < 1.0) this.hit();
     }
 
     hit() {
         if (!this.target.dead) {
             this.target.takeDamage(this.data.damage, this.towerType);
-            if (this.data.slow) {
-                this.target.slowFactor = this.data.slow;
-                this.target.slowDuration = this.data.slowDuration || 2;
-            }
+            if (this.data.slow) { this.target.slowFactor = this.data.slow; this.target.slowDuration = this.data.slowDuration || 2; }
             if (this.data.aoe) {
                 const aoeEnemies = this.entities.enemies.filter(e => {
                     if (e === this.target || e.dead || e.isPhasing) return false;
-                    const dist = e.mesh.position.distanceTo(this.target.mesh.position);
-                    return dist <= this.data.aoe;
+                    return e.mesh.position.distanceTo(this.target.mesh.position) <= this.data.aoe;
                 });
-                aoeEnemies.forEach(e => {
-                    e.takeDamage(this.data.damage * 0.7, this.towerType);
-                    if (this.data.slow) {
-                        e.slowFactor = this.data.slow;
-                        e.slowDuration = this.data.slowDuration || 2;
-                    }
-                });
-                const aoeGeo = new THREE.SphereGeometry(this.data.aoe, 16, 16);
-                const aoeMat = new THREE.MeshBasicMaterial({ color: this.data.color, transparent: true, opacity: 0.4, wireframe: true });
-                const aoeMesh = new THREE.Mesh(aoeGeo, aoeMat);
+                aoeEnemies.forEach(e => { e.takeDamage(this.data.damage * 0.7, this.towerType); if (this.data.slow) { e.slowFactor = this.data.slow; e.slowDuration = this.data.slowDuration || 2; } });
+                const aoeMesh = new THREE.Mesh(new THREE.SphereGeometry(this.data.aoe, 16, 16), new THREE.MeshBasicMaterial({ color: this.data.color, transparent: true, opacity: 0.4, wireframe: true }));
                 aoeMesh.position.copy(this.target.mesh.position);
                 this.scene.add(aoeMesh);
                 setTimeout(() => this.scene.remove(aoeMesh), 200);
@@ -112,43 +80,27 @@ export class Projectile {
             if (this.chainCount > 0 && this.chainedEnemies.length < (this.data.chain || 1)) {
                 const nearbyEnemies = this.entities.enemies.filter(e => {
                     if (e.dead || e.isPhasing || this.chainedEnemies.includes(e)) return false;
-                    const dist = e.mesh.position.distanceTo(this.target.mesh.position);
-                    return dist <= this.chainRange;
+                    return e.mesh.position.distanceTo(this.target.mesh.position) <= this.chainRange;
                 });
                 if (nearbyEnemies.length > 0) {
-                    const nextTarget = nearbyEnemies[0];
-                    this.chainedEnemies.push(nextTarget);
-                    const chainMat = new THREE.LineBasicMaterial({ color: this.data.color, linewidth: 2 });
-                    const chainPoints = [this.target.mesh.position.clone(), nextTarget.mesh.position.clone()];
-                    const chainGeo = new THREE.BufferGeometry().setFromPoints(chainPoints);
-                    const chainLine = new THREE.Line(chainGeo, chainMat);
-                    this.scene.add(chainLine);
-                    setTimeout(() => this.scene.remove(chainLine), 150);
-                    this.target = nextTarget;
-                    this.chainCount--;
-                    this.pos = this.mesh.position.clone();
-                    return;
+                    const nextTarget = nearbyEnemies[0]; this.chainedEnemies.push(nextTarget);
+                    const chainLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints([this.target.mesh.position.clone(), nextTarget.mesh.position.clone()]), new THREE.LineBasicMaterial({ color: this.data.color, linewidth: 2 }));
+                    this.scene.add(chainLine); setTimeout(() => this.scene.remove(chainLine), 150);
+                    this.target = nextTarget; this.chainCount--; this.pos = this.mesh.position.clone(); return;
                 }
             }
             if (this.pierceCount > 0 && !this.piercedEnemies.includes(this.target)) {
-                this.piercedEnemies.push(this.target);
-                this.pierceCount--;
+                this.piercedEnemies.push(this.target); this.pierceCount--;
                 const dir = new THREE.Vector3().subVectors(this.target.mesh.position, this.pos).normalize();
                 const nextEnemies = this.entities.enemies.filter(e => {
                     if (e.dead || e.isPhasing || this.piercedEnemies.includes(e)) return false;
                     const toEnemy = new THREE.Vector3().subVectors(e.mesh.position, this.target.mesh.position);
-                    const dist = toEnemy.length();
-                    toEnemy.normalize();
-                    const dot = dir.dot(toEnemy);
-                    return dot > 0.7 && dist < 10;
+                    const dist = toEnemy.length(); toEnemy.normalize();
+                    return dir.dot(toEnemy) > 0.7 && dist < 10;
                 });
-                if (nextEnemies.length > 0) {
-                    this.target = nextEnemies[0];
-                    return;
-                }
+                if (nextEnemies.length > 0) { this.target = nextEnemies[0]; return; }
             }
         }
-        this.active = false;
-        this.scene.remove(this.mesh);
+        this.active = false; this.scene.remove(this.mesh);
     }
 }

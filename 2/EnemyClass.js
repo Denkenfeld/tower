@@ -2,7 +2,6 @@
 import * as THREE from 'three';
 import { LEVELS } from './levels.js';
 
-// Export only once - at the class declaration
 export class Enemy {
             constructor(type, isBalloon, balloonSize, scene, neuroCore, shake, gameState, getGameSpeed) {
                 this.type = type;
@@ -14,10 +13,10 @@ export class Enemy {
                 this.isBalloon = isBalloon;
                 this.balloonSize = balloonSize;
                 
-                const cfg = LEVELS[gameState.levelIndex].isSandbox ? gameState.sandboxConfig : null;
+                const cfg = LEVELS[this.gameState.levelIndex].isSandbox ? this.gameState.sandboxConfig : null;
                 const scale = cfg ? cfg.difficultyScale : 1.0;
                 
-                let hp = (30 + gameState.wave * 15) * scale;
+                let hp = (30 + this.gameState.wave * 15) * scale;
                 let speed = 6;
                 let charScale = 0.8;
                 let color = 0xff0055;
@@ -67,7 +66,7 @@ export class Enemy {
                     this.mesh = createCharacter(type, charScale, color, eyeColor);
                 }
                 
-                const start = LEVELS[gameState.levelIndex].path[0];
+                const start = LEVELS[this.gameState.levelIndex].path[0];
                 const yOffset = isBalloon ? charScale + 0.5 : charScale * 1.5;
                 this.mesh.position.set(start.x * TILE_SIZE, yOffset, start.z * TILE_SIZE);
                 
@@ -76,8 +75,6 @@ export class Enemy {
                 this.speed = speed;
                 this.pathIndex = 0;
                 this.dead = false;
-
-                // Slow effect properties (NEW)
                 this.slowFactor = 1.0;
                 this.slowDuration = 0;
                 this.isSlowed = false;
@@ -140,7 +137,7 @@ export class Enemy {
                     }
                 }
                 
-                const path = LEVELS[gameState.levelIndex].path;
+                const path = LEVELS[this.gameState.levelIndex].path;
                 if (this.pathIndex >= path.length - 1) {
                     this.hitBase();
                     return;
@@ -241,7 +238,7 @@ export class Enemy {
                 this.dead = true;
                 this.scene.remove(this.mesh);
                 if (neuroCore && !neuroCore.destroyed) this.neuroCore.takeDamage();
-                gameState.lives--;
+                this.gameState.lives--;
                 updateUI();
             }
         }
@@ -465,28 +462,28 @@ export class Enemy {
         function startWave() {
             if (gameState.isGameOver) return;
             
-            if (gameState.wave > 1) {
+            if (this.gameState.wave > 1) {
                 collapseTileWithTower();
             }
             
             const msg = document.getElementById('msg-area');
-            msg.innerText = "WAVE " + gameState.wave;
+            msg.innerText = "WAVE " + this.gameState.wave;
             msg.style.opacity = 1;
             setTimeout(() => msg.style.opacity = 0, 2000);
 
-            const level = LEVELS[gameState.levelIndex];
-            const cfg = level.isSandbox ? gameState.sandboxConfig : null;
+            const level = LEVELS[this.gameState.levelIndex];
+            const cfg = level.isSandbox ? this.gameState.sandboxConfig : null;
 
             let baseCount = cfg ? cfg.enemyCount : 5;
             let diffScale = cfg ? cfg.difficultyScale : 1.0;
-            let total = Math.floor(baseCount + (gameState.wave - 1) * 1.5 * diffScale);
+            let total = Math.floor(baseCount + (this.gameState.wave - 1) * 1.5 * diffScale);
             
-            if (cfg && cfg.maxWaves && gameState.wave > cfg.maxWaves) {
+            if (cfg && cfg.maxWaves && this.gameState.wave > cfg.maxWaves) {
                 victoryScreen();
                 return;
             }
             
-            const intervalTime = Math.max(200, 1500 - gameState.wave * 50);
+            const intervalTime = Math.max(200, 1500 - this.gameState.wave * 50);
             let count = 0;
 
             const spawner = setInterval(() => {
@@ -510,15 +507,15 @@ export class Enemy {
                         else type = 'TANK';
                     } else {
                         const r = Math.random();
-                        if (gameState.wave > 3 && r > 0.85) type = 'SPEED';
-                        else if (gameState.wave > 5 && r > 0.9) type = 'TANK';
+                        if (this.gameState.wave > 3 && r > 0.85) type = 'SPEED';
+                        else if (this.gameState.wave > 5 && r > 0.9) type = 'TANK';
                         
-                        if (gameState.wave >= 7) {
+                        if (this.gameState.wave >= 7) {
                             if (r < 0.05) type = 'ASSASSIN';
                             else if (r > 0.93 && r < 0.96) type = 'GHOST';
                             else if (r > 0.96 && r < 0.98) type = 'SPLITTER';
                         }
-                        if (gameState.wave >= 10) {
+                        if (this.gameState.wave >= 10) {
                             if (r > 0.88 && r < 0.91) type = 'JUGGERNAUT';
                             else if (r > 0.98 && r < 0.99) type = 'HEALER';
                             else if (r > 0.99) type = 'NATRON';
@@ -526,11 +523,11 @@ export class Enemy {
                     }
                     
                     const bossInterval = cfg ? cfg.bossInterval : 5;
-                    if (gameState.wave % bossInterval === 0 && count === total - 1) type = 'BOSS';
+                    if (this.gameState.wave % bossInterval === 0 && count === total - 1) type = 'BOSS';
                 }
 
                 if (isBalloon) {
-                    const size = Math.min(4, Math.floor(1 + gameState.wave * 0.3));
+                    const size = Math.min(4, Math.floor(1 + this.gameState.wave * 0.3));
                     entities.enemies.push(new Enemy(type, true, size));
                 } else {
                     entities.enemies.push(new Enemy(type));
@@ -550,7 +547,7 @@ function checkWaveEnd() {
             const checker = setInterval(() => {
                 if (entities.enemies.length === 0 && !gameState.isGameOver) {
                     clearInterval(checker);
-                    gameState.wave++;
+                    this.gameState.wave++;
                     updateUI();
                     
                     const msg = document.getElementById('msg-area');
@@ -640,14 +637,14 @@ function checkWaveEnd() {
 
         function updateUI() {
             document.getElementById('money-val').innerText = gameState.money;
-            document.getElementById('lives-val').innerText = Math.max(0, gameState.lives * 5) + "%";
-            document.getElementById('wave-val').innerText = gameState.wave;
+            document.getElementById('lives-val').innerText = Math.max(0, this.gameState.lives * 5) + "%";
+            document.getElementById('wave-val').innerText = this.gameState.wave;
         }
 
         function endGame() {
             gameState.isGameOver = true;
             saveHighscore();
-            document.getElementById('final-score').innerText = "WAVES SURVIVED: " + (gameState.wave - 1);
+            document.getElementById('final-score').innerText = "WAVES SURVIVED: " + (this.gameState.wave - 1);
             document.getElementById('game-over-screen').style.display = 'flex';
         }
 

@@ -14,7 +14,6 @@ export function updateUI() {
     if (livesEl) livesEl.innerText = gameState.lives + '%';
     if (waveEl) waveEl.innerText = gameState.wave;
 
-    // Update tower buttons affordability
     TOWER_TYPES.forEach((type, idx) => {
         const btn = document.querySelector(`[data-type="${idx}"]`);
         if (btn) {
@@ -25,44 +24,24 @@ export function updateUI() {
             }
         }
     });
-
-    // Update tile button
-    const tileBtn = document.querySelector('[data-type="tile"]');
-    if (tileBtn) {
-        if (gameState.money < TILE_COSTS.stack) {
-            tileBtn.classList.add('disabled');
-        } else {
-            tileBtn.classList.remove('disabled');
-        }
-    }
 }
 
 export function selectTower(type) {
     gameState.selectedTowerType = type;
     setDeleteMode(false);
 
-    document.querySelectorAll('.tower-btn').forEach(btn => {
-        btn.classList.remove('selected');
-    });
-
+    document.querySelectorAll('.tower-btn').forEach(btn => btn.classList.remove('selected'));
     const selectedBtn = document.querySelector(`[data-type="${type}"]`);
-    if (selectedBtn) {
-        selectedBtn.classList.add('selected');
-    }
+    if (selectedBtn) selectedBtn.classList.add('selected');
 }
 
 export function selectTileMode() {
     gameState.selectedTowerType = -1;
     setDeleteMode(false);
 
-    document.querySelectorAll('.tower-btn').forEach(btn => {
-        btn.classList.remove('selected');
-    });
-
+    document.querySelectorAll('.tower-btn').forEach(btn => btn.classList.remove('selected'));
     const tileBtn = document.querySelector('[data-type="tile"]');
-    if (tileBtn) {
-        tileBtn.classList.add('selected');
-    }
+    if (tileBtn) tileBtn.classList.add('selected');
 }
 
 export function toggleDeleteMode() {
@@ -155,13 +134,10 @@ export function showMessage(text) {
     if (msgEl) {
         msgEl.innerText = text;
         msgEl.style.opacity = 1;
-        setTimeout(() => {
-            msgEl.style.opacity = 0;
-        }, 2000);
+        setTimeout(() => { msgEl.style.opacity = 0; }, 2000);
     }
 }
 
-// Window-exposed functions for onclick handlers
 window.selectTower = selectTower;
 window.selectTileMode = selectTileMode;
 window.toggleDeleteMode = toggleDeleteMode;
@@ -182,7 +158,6 @@ window.sellTower = function() {
     const tile = getTileAt(selectedTower.mesh.position.x, selectedTower.mesh.position.z);
     if (tile) tile.tower = null;
 
-    // Will be removed by scene reference
     const idx = entities.towers.indexOf(selectedTower);
     if (idx !== -1) entities.towers.splice(idx, 1);
 
@@ -206,52 +181,12 @@ window.repairTile = function() {
 };
 
 window.togglePause = function() {
-    const paused = !window.isPausedGlobal;
-    window.isPausedGlobal = paused;
-
+    window.isPausedGlobal = !window.isPausedGlobal;
     const overlay = document.getElementById('pause-overlay');
-    if (overlay) {
-        overlay.style.display = paused ? 'flex' : 'none';
-    }
-
-    if (paused) {
+    if (overlay) overlay.style.display = window.isPausedGlobal ? 'flex' : 'none';
+    if (window.isPausedGlobal) {
         sfx.pauseBackgroundMusic();
     } else {
         if (sfx.enabled) sfx.resumeBackgroundMusic();
-    }
-};
-
-window.startGame = function(levelIndex) {
-    // Will be handled by main.js
-    if (window.startGameCallback) {
-        window.startGameCallback(levelIndex);
-    }
-};
-
-window.showMenu = function() {
-    document.getElementById('start-screen').style.display = 'flex';
-    document.getElementById('ui-layer').style.display = 'none';
-    document.getElementById('game-over-screen').style.display = 'none';
-    document.getElementById('victory-screen').style.display = 'none';
-    document.getElementById('pause-overlay').style.display = 'none';
-    window.isPausedGlobal = false;
-    sfx.stopBackgroundMusic();
-};
-
-window.restartLevel = function() {
-    if (window.startGameCallback) {
-        window.startGameCallback(gameState.levelIndex);
-    }
-};
-
-window.updateLighting = function(type, value) {
-    if (window.updateLightingCallback) {
-        window.updateLightingCallback(type, value);
-    }
-};
-
-window.updateGameSpeed = function(value) {
-    if (window.updateGameSpeedCallback) {
-        window.updateGameSpeedCallback(value);
     }
 };

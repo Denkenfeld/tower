@@ -4,7 +4,6 @@ import { LEVELS } from './levels.js';
 import { entities, gameState } from './gameState.js';
 import { tiles } from './grid.js';
 import { sfx } from './audio.js';
-import { updateUI, showMessage } from './ui.js';
 
 export let waveInProgress = false;
 export let waveSpawnTimer = 0;
@@ -28,7 +27,7 @@ export function startWave(hideTowerInfo, scene, neuroCore, shake) {
     if (buildMenu) buildMenu.style.display = 'none';
 }
 
-export function spawnEnemy(scene, neuroCore, shake, gameSpeed) {
+export function spawnEnemy(scene, neuroCore, shake, getGameSpeed) {
     if (enemiesSpawnedThisWave >= totalEnemiesToSpawn) return;
 
     const level = LEVELS[gameState.levelIndex];
@@ -47,25 +46,23 @@ export function spawnEnemy(scene, neuroCore, shake, gameSpeed) {
         type = 'TANK';
     }
 
-    const enemy = new Enemy(type, false, 3, scene, neuroCore, shake, gameState, gameSpeed);
+    const enemy = new Enemy(type, false, 3, scene, neuroCore, shake, gameState, getGameSpeed);
     entities.enemies.push(enemy);
     enemiesSpawnedThisWave++;
 }
 
-export function checkWaveComplete(scene) {
+export function checkWaveComplete(scene, updateUI, showMessage) {
     if (!waveInProgress) return;
     if (enemiesSpawnedThisWave < totalEnemiesToSpawn) return;
     if (entities.enemies.length > 0) return;
 
-    // Wave complete!
     waveInProgress = false;
     gameState.wave++;
 
     const reward = 50 + gameState.wave * 10;
     gameState.money += reward;
 
-    // ====== TILE DAMAGE SYSTEM (NEW!) ======
-    // Random tile with tower loses 1 stack level
+    // === TILE DAMAGE SYSTEM ===
     const tilesWithTowers = tiles.filter(t => t.tower && !t.isPath && !t.isCollapsed);
 
     if (tilesWithTowers.length > 0) {
@@ -73,10 +70,7 @@ export function checkWaveComplete(scene) {
         const destroyed = randomTile.damageStack();
 
         if (destroyed) {
-            // Tile completely destroyed
             showMessage(`⚠️ TILE DESTROYED AT (${randomTile.x}, ${randomTile.z})!`);
-
-            // Remove tower
             if (randomTile.tower) {
                 scene.remove(randomTile.tower.mesh);
                 const idx = entities.towers.indexOf(randomTile.tower);
@@ -84,36 +78,32 @@ export function checkWaveComplete(scene) {
                 randomTile.tower = null;
             }
         } else {
-            // Tile lost 1 stack level
-            showMessage(`⚠️ TILE DAMAGED AT (${randomTile.x}, ${randomTile.z})! Stack reduced.`);
+            showMessage(`⚠️ TILE DAMAGED AT (${randomTile.x}, ${randomTile.z})!`);
         }
-
         sfx.playCollapse();
     }
 
     showMessage(`✅ WAVE ${gameState.wave - 1} COMPLETE! +${reward} CR`);
     updateUI();
 
-    // Check victory condition
     const cfg = LEVELS[gameState.levelIndex].isSandbox ? gameState.sandboxConfig : null;
     if (cfg && cfg.maxWaves && gameState.wave > cfg.maxWaves) {
         victoryGame();
         return;
     }
 
-    // Re-enable build menu after delay
     setTimeout(() => {
         const buildMenu = document.getElementById('build-menu');
         if (buildMenu) buildMenu.style.display = 'flex';
     }, 2000);
 }
 
-export function updateWaveSpawning(dt, scene, neuroCore, shake, gameSpeed) {
+export function updateWaveSpawning(dt, scene, neuroCore, shake, getGameSpeed) {
     if (!waveInProgress) return;
 
     waveSpawnTimer += dt;
     if (waveSpawnTimer >= 1.5 && enemiesSpawnedThisWave < totalEnemiesToSpawn) {
-        spawnEnemy(scene, neuroCore, shake, gameSpeed);
+        spawnEnemy(scene, neuroCore, shake, getGameSpeed);
         waveSpawnTimer = 0;
     }
 }

@@ -7,21 +7,13 @@ export let ambientLight, directionalLight;
 export let matrixSkyDome;
 
 export function initScene() {
-    // Scene
     scene = new THREE.Scene();
     scene.fog = new THREE.FogExp2(0x000000, 0.02);
 
-    // Camera
-    camera = new THREE.PerspectiveCamera(
-        60,
-        window.innerWidth / window.innerHeight,
-        0.1,
-        500
-    );
+    camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 500);
     camera.position.set(0, 35, 35);
     camera.lookAt(0, 0, 0);
 
-    // Renderer
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
@@ -29,7 +21,6 @@ export function initScene() {
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     document.body.appendChild(renderer.domElement);
 
-    // Controls
     controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
@@ -37,7 +28,6 @@ export function initScene() {
     controls.minDistance = 15;
     controls.maxDistance = 60;
 
-    // Lights
     ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
     scene.add(ambientLight);
 
@@ -50,11 +40,9 @@ export function initScene() {
     directionalLight.shadow.camera.bottom = -30;
     scene.add(directionalLight);
 
-    // Sky dome
     matrixSkyDome = createMatrixSkyDome();
     if (matrixSkyDome) scene.add(matrixSkyDome);
 
-    // Window resize handler
     window.addEventListener('resize', onWindowResize);
 
     return { scene, camera, renderer, controls };
@@ -62,9 +50,7 @@ export function initScene() {
 
 function createMatrixSkyDome() {
     const skyGeo = new THREE.SphereGeometry(100, 64, 64);
-    const skyUniforms = {
-        uTime: { value: 0 }
-    };
+    const skyUniforms = { uTime: { value: 0 } };
 
     const vertexShader = `
         varying vec3 vPosition;
@@ -110,9 +96,7 @@ function onWindowResize() {
 }
 
 export function clearScene() {
-    while(scene.children.length > 0) {
-        scene.remove(scene.children[0]);
-    }
+    while(scene.children.length > 0) scene.remove(scene.children[0]);
 }
 
 export function updateSkyDome(time) {
