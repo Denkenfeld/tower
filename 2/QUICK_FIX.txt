@@ -1,0 +1,70 @@
+═══════════════════════════════════════════════════════════
+  QUICK FIX - BLACK SCREEN SOLUTION
+═══════════════════════════════════════════════════════════
+
+PROBLEM: Black screen, "Can't find variable: scene" errors
+
+SOLUTION: Download these 5 UPDATED files:
+
+  1. EnemyClass.js [code_file:19] ⭐
+  2. CoreClass.js [code_file:20] ⭐
+  3. ui.js [code_file:24] ⭐
+  4. scene.js [code_file:25] ⭐
+  5. main.js [code_file:26] ⭐
+
+REPLACE your old versions with these 5 files.
+
+═══════════════════════════════════════════════════════════
+
+THEN RUN:
+
+  python -m http.server 8000
+
+OPEN:
+
+  http://localhost:8000
+
+═══════════════════════════════════════════════════════════
+
+YOU SHOULD SEE:
+
+  ✅ 3D animated background behind start menu
+  ✅ No console errors
+  ✅ All buttons work
+  ✅ Game is playable
+
+═══════════════════════════════════════════════════════════
+
+WHAT WAS FIXED:
+
+  • EnemyClass.js - Removed module-level code using 'scene'
+  • CoreClass.js - Removed 98 lines of extra code
+  • ui.js - Fixed STACK button, fixed baseCost error
+  • main.js - Scene now initializes on page load
+  • scene.js - Verified clean initialization
+
+═══════════════════════════════════════════════════════════
+
+All 17 files needed (5 updated + 12 unchanged):
+
+  EnemyClass.js ⭐        grid.js
+  CoreClass.js ⭐         waves.js
+  ui.js ⭐               index.html
+  scene.js ⭐            styles.css
+  main.js ⭐             config.js
+  TileClass.js           towerTypes.js
+  TowerClass.js          levels.js
+  ProjectileClass.js     audio.js
+  gameState.js
+
+═══════════════════════════════════════════════════════════
+
+Your game will have:
+  • 6 unique towers with different 3D shapes
+  • Tile stacking system (gold tiles)
+  • Wave-based tile damage
+  • All special abilities working
+
+Ready to play! 🎮✨
+
+═══════════════════════════════════════════════════════════
