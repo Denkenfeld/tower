@@ -1877,6 +1877,32 @@
             document.getElementById('repair-btn').style.display = 'none';
         }
 
+        function upgradeTower() {
+            if (!selectedTower) return;
+
+            const typeData = TOWER_TYPES[selectedTower.type];
+
+            if (selectedTower.level >= typeData.upgrades.length - 1) {
+                return; // Already max level
+            }
+
+            const nextUpgrade = typeData.upgrades[selectedTower.level + 1];
+
+            if (gameState.money >= nextUpgrade.cost) {
+                gameState.money -= nextUpgrade.cost;
+                selectedTower.level++;
+                selectedTower.damage = nextUpgrade.damage;
+                selectedTower.range = nextUpgrade.range;
+                selectedTower.fireRate = nextUpgrade.rate;
+
+                sfx.playBuild();
+                showTowerInfo(selectedTower);
+                updateUI();
+            } else {
+                sfx.playError();
+            }
+        }
+
         window.upgradeTower = function() {
             if (!selectedTower) return;
             const typeData = TOWER_TYPES[selectedTower.typeIndex];
@@ -2620,6 +2646,11 @@ function checkWaveEnd() {
 
         function onPointerDown(e) {
             if (gameState.isGameOver) return;
+
+            // Prüfe ob Klick auf UI-Element statt Canvas erfolgte
+            if (e.target !== renderer.domElement) {
+                return; // Klick war auf UI-Element, nicht auf Canvas
+            }
             
             mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
