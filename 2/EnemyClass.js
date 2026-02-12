@@ -2,9 +2,15 @@
 import * as THREE from 'three';
 import { LEVELS } from './levels.js';
 
+// Export only once - at the class declaration
 export class Enemy {
-            constructor(type, isBalloon = false, balloonSize = 3) {
+            constructor(type, isBalloon, balloonSize, scene, neuroCore, shake, gameState, getGameSpeed) {
                 this.type = type;
+                this.scene = scene;
+                this.neuroCore = neuroCore;
+                this.shake = shake;
+                this.gameState = gameState;
+                this.getGameSpeed = getGameSpeed;
                 this.isBalloon = isBalloon;
                 this.balloonSize = balloonSize;
                 
@@ -85,7 +91,7 @@ export class Enemy {
                     this.hpBar.position.y = charScale * 2.5;
                     this.mesh.add(this.hpBar);
                 }
-                scene.add(this.mesh);
+                this.scene.add(this.mesh);
             }
 
             update(dt) {
@@ -227,14 +233,14 @@ export class Enemy {
                     const particleColor = this.mesh.material ? this.mesh.material.color.getHex() : 0xff0055;
                     spawnParticles(this.mesh.position, particleColor, this.isBalloon ? 5 : 10);
                     shake.amount = this.isBalloon ? 0.1 : 0.3;
-                    scene.remove(this.mesh);
+                    this.scene.remove(this.mesh);
                 }
             }
 
             hitBase() {
                 this.dead = true;
-                scene.remove(this.mesh);
-                if (neuroCore && !neuroCore.destroyed) neuroCore.takeDamage();
+                this.scene.remove(this.mesh);
+                if (neuroCore && !neuroCore.destroyed) this.neuroCore.takeDamage();
                 gameState.lives--;
                 updateUI();
             }
@@ -297,7 +303,7 @@ export class Enemy {
                 this.light.position.y = 1;
                 this.mesh.add(this.light);
 
-                scene.add(this.mesh);
+                this.scene.add(this.mesh);
             }
 
             upgrade() {
@@ -391,7 +397,7 @@ export class Enemy {
                 this.mesh.scale.set(1, 1, 1);
                 
                 this.active = true;
-                scene.add(this.mesh);
+                this.scene.add(this.mesh);
 
                 this.light = new THREE.PointLight(data.color, 0.5, 3);
                 this.mesh.add(this.light);
@@ -401,7 +407,7 @@ export class Enemy {
                 if (!this.active) return;
                 if ((this.target.dead || this.target.isPhasing) && !this.data.aoe) {
                     this.active = false; 
-                    scene.remove(this.mesh); 
+                    this.scene.remove(this.mesh); 
                     return;
                 }
 
@@ -417,7 +423,7 @@ export class Enemy {
 
             hit() {
                 this.active = false;
-                scene.remove(this.mesh);
+                this.scene.remove(this.mesh);
                 
                 if (this.data.aoe) {
                     spawnParticles(this.mesh.position, this.data.color, 20);
@@ -787,5 +793,3 @@ function checkWaveEnd() {
         }
 
         init();
-   
-export { Enemy };

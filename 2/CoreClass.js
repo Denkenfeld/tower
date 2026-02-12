@@ -1416,4 +1416,3 @@ function checkWaveEnd() {
         }
 
         init();
-   
