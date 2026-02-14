@@ -1,1 +1,221 @@
-3
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>NEON DEFENSE: ARCADE EDITION</title>
+    <link rel="stylesheet" href="styles.css">
+    
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <div class="hud-top">
+            <div class="stat-box" id="lives-display">
+                <div class="stat-label">NEURO-CORE INTEGRITY</div>
+                <div class="stat-value" id="lives-val">100%</div>
+            </div>
+            <div class="stat-box" id="wave-display">
+                <div class="stat-label">WAVE</div>
+                <div class="stat-value" id="wave-val">1</div>
+            </div>
+            <div class="stat-box" id="money-display">
+                <div class="stat-label">CREDITS</div>
+                <div class="stat-value" id="money-val">0</div>
+            </div>
+        </div>
+
+        <div class="game-controls" style="display:none;" id="game-controls">
+            <button class="control-btn pause" onclick="togglePause()">⏸️ PAUSE</button>
+            <button class="control-btn" onclick="showMenu()">📋 MENU</button>
+        </div>
+
+        <div class="light-panel" style="display:none;" id="light-panel">
+            <h4>⚙️ SETTINGS</h4>
+            
+            <button class="toggle-btn active" id="sound-toggle" onclick="toggleSound()">🔊 SOUND: ON</button>
+            
+            <label style="color:#fff; font-size:12px; margin-top:10px; display:block;">💡 Ambient: <span id="ambient-val">0.4</span></label>
+            <input type="range" class="light-slider" min="0" max="100" value="40" oninput="updateLighting('ambient', this.value)">
+            
+            <label style="color:#fff; font-size:12px; margin-top:10px; display:block;">☀️ Directional: <span id="dir-val">1.2</span></label>
+            <input type="range" class="light-slider" min="0" max="200" value="120" oninput="updateLighting('directional', this.value)">
+            
+            <label style="color:#fff; font-size:12px; margin-top:10px; display:block;">🎨 Color Hue: <span id="hue-val">180°</span></label>
+            <input type="range" class="light-slider" min="0" max="360" value="180" oninput="updateLighting('hue', this.value)">
+            
+            <label style="color:#fff; font-size:12px; margin-top:10px; display:block;">⚡ Game Speed: <span id="speed-val">1.0x</span></label>
+            <input type="range" class="light-slider" min="10" max="200" value="100" oninput="updateGameSpeed(this.value)">
+        </div>
+
+        <div id="msg-area">WAVE COMPLETE</div>
+
+        <div id="build-menu" style="display:none;">
+            <div class="tower-btn selected" data-type="0" onclick="selectTower(0)">
+                <div class="tower-name">HACKER-0</div>
+                <div style="font-size:20px;">👨‍💻</div>
+                <div class="tower-price">50 CR</div>
+            </div>
+            <div class="tower-btn" data-type="1" onclick="selectTower(1)">
+                <div class="tower-name">HACKER-1</div>
+                <div style="font-size:20px;">🎯</div>
+                <div class="tower-price">120 CR</div>
+            </div>
+            <div class="tower-btn" data-type="2" onclick="selectTower(2)">
+                <div class="tower-name">HACKER-X</div>
+                <div style="font-size:20px;">💻</div>
+                <div class="tower-price">200 CR</div>
+            </div>
+            <div class="tower-btn" onclick="toggleDeleteMode()">
+                <div class="tower-name">DELETE</div>
+                <div style="font-size:20px;">🗑️</div>
+                <div class="tower-price">SELL</div>
+            </div>
+        </div>
+
+        <div class="tower-info-panel" id="tower-info-panel">
+            <h3 id="tower-info-name">Hacker</h3>
+            <div class="tower-stat" id="tower-info-level">Level: 1</div>
+            <div class="tower-stat" id="tower-info-damage">Damage: 10</div>
+            <div class="tower-stat" id="tower-info-range">Range: 15</div>
+            <div class="tower-stat" id="tower-info-rate">Fire Rate: 0.6s</div>
+            <button class="upgrade-btn" id="upgrade-btn" onclick="upgradeTower()">UPGRADE (100 CR)</button>
+            <button class="sell-btn" onclick="sellTower()">SELL (25 CR)</button>
+            <button class="repair-btn" id="repair-btn" onclick="repairTile()" style="display:none;">REPAIR TILE (200 CR)</button>
+        </div>
+    </div>
+
+    <div class="pause-overlay" id="pause-overlay">
+        <div style="text-align: center;">
+            <h1 style="-webkit-text-fill-color: #ff0;">⏸️ PAUSED</h1>
+            <button class="btn-main" onclick="togglePause()">RESUME</button>
+            <button class="btn-main" onclick="restartLevel()">RESTART</button>
+            <button class="btn-main" onclick="showMenu()">MAIN MENU</button>
+        </div>
+    </div>
+
+    <div id="start-screen" class="overlay-screen">
+        <h1>NEON DEFENSE</h1>
+        <h2>PROTECT THE NEURO-CORE</h2>
+        <div class="level-select-container">
+            <div class="level-card" onclick="startGame(0)">LEVEL 1<br>The Snake</div>
+            <div class="level-card" onclick="startGame(1)">LEVEL 2<br>The Spiral</div>
+            <div class="level-card" onclick="startGame(2)">LEVEL 3<br>ZigZag</div>
+            <div class="level-card" onclick="startGame(3)">LEVEL 4<br>Balloons I 🎈</div>
+            <div class="level-card" onclick="startGame(4)">LEVEL 5<br>Balloons II 🎈</div>
+            <div class="level-card" onclick="startGame(5)">LEVEL 6<br>Balloons III 🎈</div>
+            <div class="level-card sandbox" onclick="openSandbox()">SANDBOX<br>MODE 🛠️</div>
+        </div>
+
+        <div class="highscore-panel">
+            <h3 style="text-align:center;">🏆 HIGH SCORES</h3>
+            <div id="highscore-list"></div>
+        </div>
+    </div>
+
+    <div id="sandbox-setup-screen" class="overlay-screen" style="display:none;">
+        <h1 style="-webkit-text-fill-color: #0f0;">🛠️ SANDBOX MODE</h1>
+        <h2>Customize Your Challenge</h2>
+        
+        <div class="sandbox-container">
+            <div class="sandbox-left">
+                <div class="sandbox-section">
+                    <h4>💰 Economy</h4>
+                    <label class="sandbox-label">Starting Credits</label>
+                    <input type="number" class="sandbox-input" id="sandbox-money" value="1000" min="0" max="10000" step="100">
+                    
+                    <label class="sandbox-label">Difficulty Scale</label>
+                    <input type="range" class="sandbox-input" id="sandbox-difficulty" min="10" max="300" value="100">
+                    <span style="color:#0ff;" id="sandbox-difficulty-val">1.0x</span>
+                </div>
+
+                <div class="sandbox-section">
+                    <h4>👾 Enemies</h4>
+                    <label class="sandbox-label">Enemies Per Wave</label>
+                    <input type="number" class="sandbox-input" id="sandbox-enemy-count" value="10" min="1" max="50">
+                    
+                    <label class="sandbox-label">Boss Wave Interval</label>
+                    <input type="number" class="sandbox-input" id="sandbox-boss-interval" value="5" min="1" max="20">
+                    
+                    <label class="sandbox-label">Max Waves (0 = ∞)</label>
+                    <input type="number" class="sandbox-input" id="sandbox-max-waves" value="0" min="0" max="100">
+                </div>
+
+                <div class="sandbox-section">
+                    <h4>🎨 Theme Color</h4>
+                    <label class="sandbox-label">Hue</label>
+                    <input type="range" class="sandbox-input" id="sandbox-hue" min="0" max="360" value="120">
+                    <div style="width:100%; height:30px; border-radius:5px; margin-top:10px;" id="sandbox-color-preview"></div>
+                </div>
+
+                <div class="sandbox-section">
+                    <h4>⚔️ Enemy Mix</h4>
+                    <label class="sandbox-label">Normal %</label>
+                    <input type="range" class="sandbox-input" id="sandbox-normal" min="0" max="100" value="50">
+                    <span style="color:#0ff;" id="sandbox-normal-val">50%</span>
+                    
+                    <label class="sandbox-label">Speed %</label>
+                    <input type="range" class="sandbox-input" id="sandbox-speed" min="0" max="100" value="30">
+                    <span style="color:#0ff;" id="sandbox-speed-val">30%</span>
+                    
+                    <label class="sandbox-label">Tank %</label>
+                    <input type="range" class="sandbox-input" id="sandbox-tank" min="0" max="100" value="20">
+                    <span style="color:#0ff;" id="sandbox-tank-val">20%</span>
+                </div>
+            </div>
+
+            <div class="sandbox-right">
+                <div class="path-editor">
+                    <h4 style="color:#0f0; margin: 0 0 10px 0;">🛤️ Path Editor</h4>
+                    <div style="color:#888; font-size:11px; margin-bottom:10px;">
+                        Click to draw path. Start (cyan) → Path (green) → End (magenta)
+                    </div>
+                    
+                    <div class="preset-container">
+                        <button class="preset-btn" onclick="loadPreset('snake')">🐍 Snake</button>
+                        <button class="preset-btn" onclick="loadPreset('spiral')">🌀 Spiral</button>
+                        <button class="preset-btn" onclick="loadPreset('zigzag')">⚡ ZigZag</button>
+                        <button class="preset-btn" onclick="loadPreset('maze')">🏛️ Maze</button>
+                        <button class="preset-btn" onclick="loadPreset('straight')">➡️ Straight</button>
+                        <button class="preset-btn" onclick="clearPath()">🗑️ Clear</button>
+                    </div>
+                    
+                    <div class="path-grid" id="path-grid"></div>
+                    
+                    <div style="color:#888; font-size:11px; margin-top:10px;">
+                        Path Length: <span id="path-length" style="color:#0f0;">0</span> tiles
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <button class="btn-main" onclick="startSandboxGame()">🚀 START SANDBOX</button>
+            <button class="btn-main" onclick="closeSandbox()">BACK</button>
+        </div>
+    </div>
+
+    <div id="game-over-screen" class="overlay-screen" style="display:none;">
+        <h1 style="color:red; -webkit-text-fill-color: red;">AI TAKEOVER COMPLETE</h1>
+        <h2 id="final-score">The Neuro-Core has been compromised</h2>
+        <button class="btn-main" onclick="restartLevel()">RESTART</button>
+        <button class="btn-main" onclick="showMenu()">MAIN MENU</button>
+    </div>
+
+    <div id="victory-screen" class="overlay-screen" style="display:none;">
+        <h1 style="color:#0f0; -webkit-text-fill-color: #0f0;">CORE SECURED</h1>
+        <h2 id="victory-msg">Next Level Unlocked</h2>
+        <button class="btn-main" onclick="restartLevel()">RESTART</button>
+        <button class="btn-main" onclick="showMenu()">MAIN MENU</button>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
