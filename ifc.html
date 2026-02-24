@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kaiserstraße 61 • Echtes IFC 3D</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://unpkg.com/web-ifc@0.0.66/web-ifc-api.js"></script>
+    <script src="https://unpkg.com/three@0.134.0/examples/js/controls/OrbitControls.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .title { font-family: 'Space Grotesk', sans-serif; }
+        canvas { display: block; }
+        #dropzone { transition: all 0.3s; }
+    </style>
+</head>
+<body class="bg-zinc-950 text-white overflow-hidden">
+    <div class="absolute top-6 left-6 z-50 bg-zinc-900/90 backdrop-blur-xl border border-zinc-700 rounded-3xl px-6 py-4 flex items-center gap-3">
+        <div class="w-8 h-8 bg-emerald-500 rounded-2xl flex items-center justify-center text-2xl">🏢</div>
+        <div>
+            <div class="title text-2xl font-semibold tracking-tighter">Kaiserstraße 61</div>
+            <div class="text-xs text-zinc-400">Dortmund • Echtes IFC-Modell</div>
+        </div>
+    </div>
+
+    <div id="ui" class="absolute top-6 right-6 z-50 bg-zinc-900/90 backdrop-blur-xl border border-zinc-700 rounded-3xl p-6 w-80 hidden">
+        <h2 class="title text-xl font-semibold mb-4">Etagen</h2>
+        <div class="space-y-1 text-sm max-h-96 overflow-auto" id="floorList"></div>
+    </div>
+
+    <!-- Drop Zone -->
+    <div id="dropzone" class="absolute inset-0 flex items-center justify-center bg-black/70 z-40">
+        <div class="text-center">
+            <div class="mx-auto w-24 h-24 bg-emerald-500/10 border-4 border-dashed border-emerald-500 rounded-3xl flex items-center justify-center text-6xl mb-8">📄</div>
+            <div class="title text-4xl font-semibold mb-2">IFC-Datei laden</div>
+            <p class="text-zinc-400 mb-8">Ziehe deine <span class="font-mono text-emerald-400">abc.ifc</span> hierher<br>oder klicke zum Auswählen</p>
+            <input type="file" id="fileInput" accept=".ifc" class="hidden">
+            <button onclick="document.getElementById('fileInput').click()" 
+                    class="bg-emerald-500 hover:bg-emerald-600 px-10 py-4 rounded-3xl font-medium text-lg">
+                Datei auswählen
+            </button>
+        </div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <script>
+        // =============== SETUP ===============
+        let scene, camera, renderer, controls, api;
+        const building = new THREE.Group();
+        
+        async function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0a0a);
+
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 2000);
+            camera.position.set(60, 40, 70);
+
+            renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas'), antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+
+            // Lights
+            scene.add(new THREE.HemisphereLight(0x99ccff, 0x334466, 0.9));
+            const sun = new THREE.DirectionalLight(0xffeedd, 1.6);
+            sun.position.set(80, 120, 60);
+            scene.add(sun);
+
+            scene.add(building);
+
+            // Init web-ifc
+            api = new WebIFC.IfcAPI();
+            await api.Init();
+        }
+
+        // =============== LOAD IFC ===============
+        async function loadIFC(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const modelID = api.OpenModel(new Uint8Array(arrayBuffer));
+
+            // Get all meshes
+            const flatMeshes = api.LoadAllGeometry(modelID);
+
+            for (let i = 0; i < flatMeshes.size(); i++) {
+                const flatMesh = flatMeshes.get(i);
+                const geometry = new THREE.BufferGeometry();
+                
+                const positions = new Float32Array(flatMesh.geometry.vertexData);
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                
+                const indices = new Uint32Array(flatMesh.geometry.indexData);
+                geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+                
+                const material = new THREE.MeshStandardMaterial({
+                    color: getColorByIFCType(flatMesh.expressID),
+                    roughness: 0.85,
+                    metalness: 0.1
+                });
+                
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                building.add(mesh);
+            }
+
+            // Hide dropzone
+            document.getElementById('dropzone').style.display = 'none';
+            document.getElementById('ui').classList.remove('hidden');
+
+            // Create floor list from IFC storeys
+            createFloorList(modelID);
+        }
+
+        function getColorByIFCType(expressID) {
+            // Simple color coding based on common IFC types in your file
+            const type = api.GetLine(0, expressID).type; // simplified
+            if (type.includes('WINDOW') || type.includes('GLASS')) return 0x88ddff;
+            if (type.includes('SPACE') && api.GetLine(0, expressID).Name?.includes('Fahrr')) return 0x22ff88;
+            if (type.includes('WALL')) return 0x555555;
+            if (type.includes('SLAB')) return 0x333333;
+            return 0x777777;
+        }
+
+        function createFloorList(modelID) {
+            const list = document.getElementById('floorList');
+            const storeys = api.GetLineIDsWithType(modelID, WebIFC.IFCBUILDINGSTOREY);
+            
+            storeys.forEach(id => {
+                const storey = api.GetLine(modelID, id);
+                const div = document.createElement('div');
+                div.className = "px-5 py-3 bg-zinc-800 hover:bg-emerald-900 rounded-2xl cursor-pointer transition-all";
+                div.textContent = `${storey.Name}  (${storey.Elevation.toFixed(2)} m)`;
+                div.onclick = () => {
+                    camera.position.set(30, storey.Elevation + 15, 60);
+                    controls.target.set(8, storey.Elevation + 4, 1);
+                };
+                list.appendChild(div);
+            });
+        }
+
+        // =============== EVENTS ===============
+        document.getElementById('fileInput').addEventListener('change', e => {
+            if (e.target.files.length > 0) loadIFC(e.target.files[0]);
+        });
+
+        // Drag & Drop
+        const dropzone = document.getElementById('dropzone');
+        dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.style.backgroundColor = 'rgba(16,185,129,0.1)'; });
+        dropzone.addEventListener('dragleave', () => dropzone.style.backgroundColor = '');
+        dropzone.addEventListener('drop', e => {
+            e.preventDefault();
+            dropzone.style.backgroundColor = '';
+            if (e.dataTransfer.files.length > 0) loadIFC(e.dataTransfer.files[0]);
+        });
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // =============== ANIMATION LOOP ===============
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // =============== START ===============
+        init().then(() => {
+            animate();
+            console.log("%c✅ IFC-Viewer bereit – lade jetzt deine abc.ifc hoch!", "color:#10b981;font-weight:bold");
+        });
+    </script>
+</body>
+</html>
